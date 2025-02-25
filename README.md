@@ -1,4 +1,4 @@
-Untuk memenuhi mata kuliah pemrograman web 1, kami yang beranggotakan:
+Untuk memenuhi mata kuliah pemrograman web 1, kami yang beranggotakan: 
     1. Muhammad Adam Al-Khidri
     2. Iqbal Abdullah
     3. Ardhana Syah Hidayat
