@@ -15,12 +15,14 @@ body, html {
 }
 
 li {
+    padding-top: 15px;
     padding-bottom: 15px;
     width: 100%;
 }
 
 li:hover {
-    background-color: aquamarine;
+    background-color: orange;
+    color: white;
 }
 
 input {
