@@ -1,79 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Web Penjualan</title>
-    <link rel="stylesheet" href="/assets/styles.css" />
     <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f4f4f4;
-            font-family: Arial, sans-serif;
-        }
-        .regist-form {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        .form-input {
-            margin-bottom: 15px;
-            
-        }
-        label {
-            font-weight: bold;
-        }
-        input {
-            width: 95%;
-            padding: 10px;
-            color: white;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-        p {
-            text-align: center;
-            font-size: 14px;
-        }
-        a {
-            color: #007bff;
-            text-decoration: none;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        height: 95vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .regist-form {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .form-input {
+        margin-bottom: 15px;
+      }
+      input {
+        width: 95%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        outline: none;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        background-color: #205781;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background-color: #4f959d;
+      }
+      p {
+        text-align: center;
+        font-size: 14px;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="regist-form">
-        <h2 style="text-align: center;">Form Login</h2>
-        <form>
-            <div class="form-input">
-                <label>Username</label><br>
-                <input type="text" name="username" required />
-            </div>
-            <div class="form-input">
-                <label>Password</label><br>
-                <input type="password" name="password" required />
-            </div>
-            <button type="submit">Login</button>
-            <p>Belum mempunyai akun? <a href="#">Register</a></p>
-        </form>
+      <h2 style="text-align: center">Form Login</h2>
+      <form id="login-form" action="/dashboard.html">
+        <div class="form-input">
+          <label>Username</label><br />
+          <input style="margin-bottom: 12px;" type="text" name="username" required />
+        
+          <label>Password</label><br />
+          <input type="password" name="password" required />
+        </div>
+
+        <div class="captcha" style="margin-bottom: 16px">
+          <div style="display: flex; justify-content: space-between; gap: 12px">
+            <input type="text" id="captcha-value" disabled />
+            <input
+              type="text"
+              id="captcha-input"
+              placeholder="Ketik kode captcha"
+              required
+            />
+          </div>
+          <div
+            class="message"
+            id="message"
+            style="text-align: center; font-size: 12px; margin-top: 10px"
+          ></div>
+        </div>
+
+        <div class="btn-submit">
+          <button onclick="validateCaptcha()" type="submit">Login</button>
+        </div>
+        <p>Belum mempunyai akun? <a href="Register.html">Register</a></p>
+      </form>
     </div>
-</body>
+
+    <script>
+      function generateCaptcha() {
+        const chars =
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let captcha = "";
+        for (let i = 0; i < 6; i++) {
+          captcha += chars[Math.floor(Math.random() * chars.length)];
+        }
+        document.getElementById("captcha-value").value = captcha;
+      }
+
+      function validateCaptcha(event) {
+        const generatedCaptcha = document.getElementById("captcha-value").value;
+        const userCaptcha = document.getElementById("captcha-input").value;
+
+        if (userCaptcha === generatedCaptcha) {
+          document.getElementById("message").textContent = "Captcha benar!";
+          document.getElementById("message").style.color = "green";
+
+        } else {
+          event.preventDefault(); 
+          document.getElementById("message").textContent =
+            "Captcha salah, coba lagi.";
+          document.getElementById("message").style.color = "red";
+          generateCaptcha();
+          document.getElementById("captcha-input").value = "";
+        }
+      }
+
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", function (event) {
+          validateCaptcha(event);
+        });
+
+      window.onload = generateCaptcha;
+    </script>
+  </body>
 </html>

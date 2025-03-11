@@ -5,11 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Web Penjualan</title>
     <link rel="stylesheet" href="/assets/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
+
+  <style>
+    canvas {
+      max-width: 600px;
+      margin: auto;
+    }
+    body,
+    html {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+    }
+
+    .sidebar {
+      font-size: 22px;
+      border-right: solid 1px #1e1e1e;
+      height: max-content;
+      padding: 5rem;
+    }
+
+    li {
+      padding-top: 15px;
+      padding-bottom: 15px;
+      width: 100%;
+    }
+
+    li:hover {
+      background-color: #4f959d;
+      color: white;
+    }
+
+    input {
+      width: 100%;
+      height: 50px;
+      border-radius: 10px;
+      border: 0.5px solid #1e1e1e;
+    }
+
+    label {
+      font-size: 20px;
+      color: #1e1e1e;
+    }
+
+    form {
+      margin: 5rem;
+    }
+
+    .form-input {
+      margin-bottom: 30px;
+    }
+
+    button {
+      background-color: deepskyblue;
+      border: none;
+      border-radius: 10px;
+      width: 101%;
+      height: 50px;
+      font-size: large;
+      color: white;
+    }
+
+    button:hover {
+      background-color: white;
+      border: 1px solid deepskyblue;
+      color: deepskyblue;
+    }
+
+    .regist-form {
+      box-shadow: 0px 0px 20px 0px rgba(30, 30, 30, 0.2);
+      border-radius: 50px;
+      padding-bottom: 1px;
+    }
+  </style>
   <body>
     <table style="width: 100%; height: 100%">
       <tr>
-        <th rowspan="2" style="width: 20%; vertical-align: top; padding: 12px">
+        <th rowspan="2" style="width: 20%; vertical-align: top">
           <div
             id="sidebar"
             style="
@@ -19,16 +95,16 @@
           >
             <div
               id="title"
-              style="padding: 24px; background-color: #218838; color: white"
+              style="padding: 28px; background-color: #205781; color: white"
             >
-              <h2>PENJUALAN CAFE</h2>
+              <h4>PENJUALAN CAFE</h4>
             </div>
             <ul
               style="
                 list-style: none;
                 width: 100%;
                 padding: 0;
-                font-size: larger;
+                font-size: 14px;
                 text-align: left;
                 font-weight: 500;
               "
@@ -51,12 +127,13 @@
             </ul>
           </div>
         </th>
-        <th style="height: 24px; vertical-align: top; padding: 12px">
+        <th style="height: 24px; vertical-align: top; padding-left: 24px">
           <div
             id="title"
             style="
               padding: 24px;
               height: max-content;
+              border-radius: 0 0 0 12px;
               box-shadow: 0px 0px 20px 0px rgba(30, 30, 30, 0.2);
             "
           >
@@ -66,20 +143,35 @@
       </tr>
       <tr>
         <th
-          style="vertical-align: top; padding: 12px; display: flex; gap: 24px"
+          style="vertical-align: top; padding: 24px; display: flex; gap: 24px"
         >
+          <div
+            id="produk"
+            style="
+              box-shadow: 0px 0px 20px 0px rgba(30, 30, 30, 0.2);
+              width: 40%;
+              height: 60%;
+              border-radius: 12px;
+              padding: 12px;
+            "
+          >
+            <h5>PENJUALAN HARIAN</h5>
+            <hr />
+            <br />
+            <canvas id="salesChart"></canvas>
+            <br />
+          </div>
           <div
             id="produk"
             style="
               box-shadow: 0px 0px 20px 0px rgba(30, 30, 30, 0.2);
               width: 20%;
               height: 40%;
-              border: 1px solid orange;
               border-radius: 12px;
               padding: 12px;
-            ">
-
-            <h3>JUMLAH PRODUK</h3>
+            "
+          >
+            <h5>JUMLAH PRODUK</h5>
             <hr />
             <p style="font-size: 32px">00</p>
           </div>
@@ -89,17 +181,49 @@
               box-shadow: 0px 0px 20px 0px rgba(30, 30, 30, 0.2);
               width: 20%;
               height: 40%;
-              border: 1px solid orange;
               border-radius: 12px;
               padding: 12px;
             "
           >
-            <h3>JUMLAH TRANSAKSI</h3>
+            <h5>JUMLAH TRANSAKSI</h5>
             <hr />
             <p style="font-size: 32px">00</p>
           </div>
         </th>
       </tr>
     </table>
+
+    <script>
+      var ctx = document.getElementById("salesChart").getContext("2d");
+      var salesChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: [
+            "Senin",
+            "Selasa",
+            "Rabu",
+            "Kamis",
+            "Jumat",
+            "Sabtu",
+            "Minggu",
+          ],
+          datasets: [
+            {
+              label: "Total Penjualan (Rp)",
+              data: [500000, 700000, 450000, 600000, 800000, 900000, 750000],
+              backgroundColor: "teal",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    </script>
   </body>
 </html>
