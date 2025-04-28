@@ -1,0 +1,44 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css");
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  font-family: "Poppins", sans-serif;
+  background-color: #ebebeb;
+}
+
+/* Ensure body content is always centered if needed */
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Blue focus ring */
+button:focus-visible, input:focus-visible {
+  outline: 2px solid #4a90e2 !important;
+  outline-offset: 2px;
+}
+
+/* Reset link underline */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Utility helpers */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}

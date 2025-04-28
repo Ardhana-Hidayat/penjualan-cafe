@@ -4,94 +4,73 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Web Penjualan</title>
-    <style>
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        height: 95vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .regist-form {
-        background: white;
-        padding: 30px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        width: 100%;
-        max-width: 400px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-      .form-input {
-        margin-bottom: 15px;
-      }
-      input {
-        width: 95%;
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        outline: none;
-      }
-      button {
-        width: 100%;
-        padding: 10px;
-        background-color: #205781;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-      }
-      button:hover {
-        background-color: #4f959d;
-      }
-      p {
-        text-align: center;
-        font-size: 14px;
-      }
-      a {
-        color: #007bff;
-        text-decoration: none;
-      }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/assets/styles.css">
   </head>
-  <body>
-    <div class="regist-form">
-      <h2 style="text-align: center">Form Register</h2>
-      <form id="regist" action="/login.html">
-        <div class="form-input">
-          <label>Username</label><br />
-          <input style="margin-bottom: 12px;" type="text" name="username" required />
+  <body class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+      <h2 class="text-2xl text-left mb-6">Register</h2>
+      <form
+        id="login-form"
+        action="/dashboard.html"
+        class="flex flex-col gap-4"
+      >
+        <div class="flex flex-col">
+          <label class="mb-1 text-sm font-medium">Username</label>
+          <input
+            type="text"
+            name="username"
+            required
+            class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label class="mb-1 text-sm font-medium">Password</label>
+          <input
+            type="password"
+            name="password"
+            required
+            class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label class="mb-1 text-sm font-medium">Konfirmasi Password</label>
+          <input
+            type="password"
+            name="password"
+            required
+            class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]"
+          />
+        </div>
+        <div class="flex flex-row gap-2">
+          <input
+            type="text"
+            id="captcha-value"
+            disabled
+            required
+            class="flex-1 p-2 w-1/2 border border-gray-300 rounded"
+          />
+          <input
+            type="text"
+            id="captcha-input"
+            placeholder="Ketik Captcha"
+            required
+            class="flex-1 p-2 w-1/2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]"
+          />
+        </div>
         
-          <label>Password</label><br />
-          <input style="margin-bottom: 12px;" type="password" name="password" required />
-
-          <label>Konfirmasi Password</label><br />
-          <input type="password" name="confirmPassword" required />
-        </div>
-
-        <div class="captcha" style="margin-bottom: 16px">
-          <div style="display: flex; justify-content: space-between; gap: 12px">
-            <input type="text" id="captcha-value" disabled />
-            <input
-              type="text"
-              id="captcha-input"
-              placeholder="Ketik kode captcha"
-              required
-            />
-          </div>
-          <div
-            class="message"
-            id="message"
-            style="text-align: center; font-size: 12px; margin-top: 10px"
-          ></div>
-        </div>
-
-        <div class="btn-submit">
-          <button onclick="validateCaptcha()" type="submit">Register</button>
-        </div>
-        <p>Sudah mempunyai akun? <a href="Login.html">Login</a></p>
+        <button
+          type="submit"
+          class="p-2 bg-[#3B378B] text-white rounded hover:bg-[#524CC3] transition"
+        >
+          Register
+        </button>
+        <p class="text-sm text-center mt-2">
+          Sudah mempunyai akun?
+          <a href="login.html" class="text-yellow-500 hover:underline"
+            >Login</a
+          >
+        </p>
       </form>
     </div>
 
@@ -113,9 +92,8 @@
         if (userCaptcha === generatedCaptcha) {
           document.getElementById("message").textContent = "Captcha benar!";
           document.getElementById("message").style.color = "green";
-
         } else {
-          event.preventDefault(); 
+          event.preventDefault();
           document.getElementById("message").textContent =
             "Captcha salah, coba lagi.";
           document.getElementById("message").style.color = "red";
@@ -125,7 +103,7 @@
       }
 
       document
-        .getElementById("regist")
+        .getElementById("login-form")
         .addEventListener("submit", function (event) {
           validateCaptcha(event);
         });
