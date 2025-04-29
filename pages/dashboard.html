@@ -16,7 +16,7 @@
         <div class="text-center py-8 bg-[#1E1B57]">
           <h3 class="text-md">PENJUALAN CAFE</h3>
         </div>
-        <a href="#" class="flex gap-2 py-3 px-4 text-sm hover:bg-[#524CC3]"
+        <a href="#" class="flex gap-2 py-3 px-4 text-sm hover:bg-[#1E1B57] transition"
           ><svg
             width="20"
             height="20"
@@ -34,7 +34,7 @@
         >
         <a
           href="/transaksi.html"
-          class="flex gap-2 py-3 px-4 text-sm hover:bg-[#524CC3]"
+          class="flex gap-2 py-3 px-4 text-sm hover:bg-[#1E1B57] transition"
         >
           <svg
             width="20"
@@ -66,7 +66,7 @@
         >
         <a
           href="/detail-transaksi.html"
-          class="flex gap-2 py-3 px-4 text-sm hover:bg-[#524CC3]"
+          class="flex gap-2 py-3 px-4 text-sm hover:bg-[#1E1B57] transition"
         >
           <svg
             width="20"
@@ -98,7 +98,7 @@
         >
         <a
           href="/produk.html"
-          class="flex gap-2 py-3 px-4 text-sm hover:bg-[#524CC3]"
+          class="flex gap-2 py-3 px-4 text-sm hover:bg-[#1E1B57] transition"
         >
           <svg
             width="20"
@@ -116,8 +116,8 @@
           <span>Produk</span>
         </a>
         <a
-          href="/kategori.html"
-          class="flex gap-2 py-3 px-4 text-sm hover:bg-[#524CC3]"
+          href="/pages/kategori.html"
+          class="flex gap-2 py-3 px-4 text-sm hover:bg-[#1E1B57] transition"
         >
           <svg
             width="20"
@@ -135,6 +135,29 @@
           </svg>
 
           <span>Kategori</span>
+        </a>
+        <a
+          href="/laporan.html"
+          class="flex gap-2 py-3 px-4 text-sm hover:bg-[#1E1B57] transition"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 25 26"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.8125 14.1406H14.0625V15.7031H7.8125V14.1406ZM7.8125 10.2344H17.1875V11.7969H7.8125V10.2344ZM7.8125 18.0469H11.7188V19.6094H7.8125V18.0469Z"
+              fill="#D6D6D6"
+            />
+            <path
+              d="M19.5312 3.98438H17.1875V3.20312C17.1875 2.78872 17.0229 2.3913 16.7299 2.09827C16.4368 1.80524 16.0394 1.64063 15.625 1.64062H9.375C8.9606 1.64063 8.56317 1.80524 8.27015 2.09827C7.97712 2.3913 7.8125 2.78872 7.8125 3.20312V3.98438H5.46875C5.05435 3.98438 4.65692 4.14899 4.3639 4.44202C4.07087 4.73505 3.90625 5.13247 3.90625 5.54688V21.9531C3.90625 22.3675 4.07087 22.765 4.3639 23.058C4.65692 23.351 5.05435 23.5156 5.46875 23.5156H19.5312C19.9457 23.5156 20.3431 23.351 20.6361 23.058C20.9291 22.765 21.0938 22.3675 21.0938 21.9531V5.54688C21.0938 5.13247 20.9291 4.73505 20.6361 4.44202C20.3431 4.14899 19.9457 3.98438 19.5312 3.98438ZM9.375 3.20312H15.625V6.32812H9.375V3.20312ZM19.5312 21.9531H5.46875V5.54688H7.8125V7.89062H17.1875V5.54688H19.5312V21.9531Z"
+              fill="#D6D6D6"
+            />
+          </svg>
+
+          <span>Laporan</span>
         </a>
         <div
           class="mt-auto flex gap-2 justify-center text-center py-6 cursor-pointer"
@@ -159,9 +182,7 @@
       <!-- Main Content -->
       <div class="flex flex-col flex-1">
         <!-- Topbar -->
-        <div
-          class="bg-white p-6 flex justify-between items-center shadow"
-        >
+        <div class="bg-white p-6 flex justify-between items-center shadow">
           <h3 class="text-xl">Dashboard</h3>
           <div class="flex gap-2 p-2 rounded-md border border-[#1E1B57]">
             <svg
@@ -177,7 +198,9 @@
               />
             </svg>
 
-            <span>Administrator</span>
+            <a class="cursor-pointer">
+              <span>Administrator</span>
+            </a>
           </div>
         </div>
 
