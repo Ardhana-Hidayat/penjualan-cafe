@@ -9,8 +9,8 @@
   <script>
     window.onload = function() {
       setTimeout(function() {
-        window.location.href = "/auth/login.html";
-      }, 2000); // 2 detik lalu redirect
+        window.location.href = "/pos-php/auth/login.php";
+      }, 2000); 
     }
   </script>
 </head>
