@@ -12,7 +12,7 @@
       <h2 class="text-2xl text-left mb-6">Login</h2>
       <form
         id="login-form"
-        action="/dashboard.html"
+        action="/pages/dashboard.php"
         class="flex flex-col gap-4"
       >
         <div class="flex flex-col">
@@ -20,7 +20,7 @@
           <input
             type="text"
             name="username"
-            required
+            
             class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]"
           />
         </div>
@@ -29,11 +29,11 @@
           <input
             type="password"
             name="password"
-            required
+            
             class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]"
           />
           <p class="text-sm text-right">
-            <a href="reset-password.html" class="text-[#524CC3] text-xs"
+            <a href="/auth/reset-password.php" class="text-[#524CC3] text-xs"
               >Lupa Password?</a
             >
           </p>
@@ -43,20 +43,21 @@
             type="text"
             id="captcha-value"
             disabled
-            required
+            
             class="flex-1 p-2 w-1/2 border border-gray-300 rounded"
           />
           <input
             type="text"
             id="captcha-input"
             placeholder="Ketik Captcha"
-            required
+            
             class="flex-1 p-2 w-1/2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]"
           />
         </div>
         
         <button
           type="submit"
+          onclick="Login()"
           class="p-2 bg-[#3B378B] text-white rounded hover:bg-[#524CC3] transition"
         >
           Login
@@ -64,7 +65,7 @@
         
         <p class="text-sm text-center mt-2">
           Belum mempunyai akun?
-          <a href="register.html" class="text-yellow-500 hover:underline"
+          <a href="/auth/register.php" class="text-yellow-500 hover:underline"
             >Register</a
           >
         </p>
@@ -72,40 +73,43 @@
     </div>
 
     <script>
-      function generateCaptcha() {
-        const chars =
-          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        let captcha = "";
-        for (let i = 0; i < 6; i++) {
-          captcha += chars[Math.floor(Math.random() * chars.length)];
-        }
-        document.getElementById("captcha-value").value = captcha;
+      function Login() {
+        window.location.href('/pages/dashboard.php')
       }
+      // function generateCaptcha() {
+      //   const chars =
+      //     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      //   let captcha = "";
+      //   for (let i = 0; i < 6; i++) {
+      //     captcha += chars[Math.floor(Math.random() * chars.length)];
+      //   }
+      //   document.getElementById("captcha-value").value = captcha;
+      // }
 
-      function validateCaptcha(event) {
-        const generatedCaptcha = document.getElementById("captcha-value").value;
-        const userCaptcha = document.getElementById("captcha-input").value;
+      // function validateCaptcha(event) {
+      //   const generatedCaptcha = document.getElementById("captcha-value").value;
+      //   const userCaptcha = document.getElementById("captcha-input").value;
 
-        if (userCaptcha === generatedCaptcha) {
-          document.getElementById("message").textContent = "Captcha benar!";
-          document.getElementById("message").style.color = "green";
-        } else {
-          event.preventDefault();
-          document.getElementById("message").textContent =
-            "Captcha salah, coba lagi.";
-          document.getElementById("message").style.color = "red";
-          generateCaptcha();
-          document.getElementById("captcha-input").value = "";
-        }
-      }
+      //   if (userCaptcha === generatedCaptcha) {
+      //     document.getElementById("message").textContent = "Captcha benar!";
+      //     document.getElementById("message").style.color = "green";
+      //   } else {
+      //     event.preventDefault();
+      //     document.getElementById("message").textContent =
+      //       "Captcha salah, coba lagi.";
+      //     document.getElementById("message").style.color = "red";
+      //     generateCaptcha();
+      //     document.getElementById("captcha-input").value = "";
+      //   }
+      // }
 
-      document
-        .getElementById("login-form")
-        .addEventListener("submit", function (event) {
-          validateCaptcha(event);
-        });
+      // document
+      //   .getElementById("login-form")
+      //   .addEventListener("submit", function (event) {
+      //     validateCaptcha(event);
+      //   });
 
-      window.onload = generateCaptcha;
+      // window.onload = generateCaptcha;
     </script>
   </body>
 </html>

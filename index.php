@@ -9,7 +9,7 @@
   <script>
     window.onload = function() {
       setTimeout(function() {
-        window.location.href = "/pos-php/auth/login.php";
+        window.location.href = "/auth/login.php";
       }, 2000); 
     }
   </script>

@@ -83,14 +83,16 @@
         <div class="bg-white p-6 rounded-md shadow space-y-4 w-1/4">
           <h4>Form Tambah Kategori</h4>
           <hr />
-          <div class="flex flex-col">
-            <label class="mb-2 text-sm">Nama Kategori</label>
-            <input type="text" name="kategori" required
-              class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
-          </div>
-          <button type="submit" class="p-2 bg-[#3B378B] w-full text-white rounded hover:bg-[#524CC3] transition">
-            Simpan
-          </button>
+          <form class="space-y-4">
+            <div class="flex flex-col">
+              <label class="mb-2 text-sm">Nama Kategori</label>
+              <input type="text" name="kategori" required
+                class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
+            </div>
+            <button type="submit" class="p-2 bg-[#3B378B] w-full text-white rounded hover:bg-[#524CC3] transition">
+              Simpan
+            </button>
+          </form>
         </div>
       </div>
     </div>
@@ -106,8 +108,8 @@
 
       <h2 class="text-md mb-6">Form Edit Kategori</h2>
 
-      <form>
-        <div class="mb-6">
+      <form class="space-y-4">
+        <div>
           <label class="block text-sm text-gray-700 mb-2" for="kategori">Nama Kategori</label>
           <input type="text" id="kategori" name="kategori"
             class="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-[#3B378B]" value="Makanan" />

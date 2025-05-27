@@ -12,7 +12,7 @@
       <h2 class="text-2xl text-left mb-6">Ganti Password</h2>
       <form
         id="login-form"
-        action="/login.html"
+        action="/auth/login.php"
         class="flex flex-col gap-4"
       >
         <div class="flex flex-col">

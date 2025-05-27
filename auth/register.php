@@ -67,7 +67,7 @@
         </button>
         <p class="text-sm text-center mt-2">
           Sudah mempunyai akun?
-          <a href="login.html" class="text-yellow-500 hover:underline"
+          <a href="/auth/login.php" class="text-yellow-500 hover:underline"
             >Login</a
           >
         </p>

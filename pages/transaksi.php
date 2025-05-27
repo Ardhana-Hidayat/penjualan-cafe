@@ -106,39 +106,36 @@
         <div class="bg-white p-6 rounded-md shadow space-y-4 w-1/4">
           <h4>Form Transaksi Baru</h4>
           <hr />
+          <form class="space-y-4">
+            <div class="flex flex-col">
+              <label class="mb-2 text-sm text-center">Belum ada produk<br>yang dipilih</label>
+              <div class="mb-4">
 
-          <div class="flex flex-col">
-            <label class="mb-2 text-sm">Nama Customer</label>
-            <input type="text" name="nama_customer" required
-              class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
-          </div>
+              </div>
+            </div>
 
-          <div class="flex flex-col">
-            <label class="mb-2 text-sm">Produk</label>
-            <select name="produk_id" required
-              class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]">
-              <option value="">-- Pilih Produk --</option>
-              <option value="1">Nasi Goreng - Rp. 15.000</option>
-              <option value="2">Es Teh - Rp. 5.000</option>
-              <!-- Produk lainnya -->
-            </select>
-          </div>
+            <div class="flex flex-col">
+              <label class="mb-2 text-sm">Nama Customer</label>
+              <input type="text" name="nama_customer" required
+                class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
+            </div>
 
-          <div class="flex flex-col">
-            <label class="mb-2 text-sm">Jumlah</label>
-            <input type="number" name="jumlah" min="1" required
-              class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
-          </div>
+            <div class="flex flex-col">
+              <label class="mb-2 text-sm">Jumlah</label>
+              <input type="number" name="jumlah" min="1" required
+                class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
+            </div>
 
-          <div class="flex flex-col">
-            <label class="mb-2 text-sm">Total Harga</label>
-            <input type="text" name="total_harga" readonly
-              class="p-2 border border-gray-300 rounded bg-gray-100 cursor-not-allowed" />
-          </div>
+            <div class="flex flex-col">
+              <label class="mb-2 text-sm">Total Harga</label>
+              <input type="text" name="total_harga" readonly
+                class="p-2 border border-gray-300 rounded bg-gray-100 cursor-not-allowed" />
+            </div>
 
-          <button type="submit" class="p-2 bg-[#3B378B] w-full text-white rounded hover:bg-[#524CC3] transition">
-            Simpan
-          </button>
+            <button type="submit" class="p-2 bg-[#3B378B] w-full text-white rounded hover:bg-[#524CC3] transition">
+              Simpan
+            </button>
+          </form>
         </div>
       </div>
     </div>
@@ -152,16 +149,28 @@
         &times;
       </button>
 
-      <h2 class="text-md mb-6">Form Edit Kategori</h2>
+      <h2 class="text-md mb-6">Form Edit Transaksi</h2>
 
-      <form>
-        <div class="mb-6">
-          <label class="block text-sm text-gray-700 mb-2" for="kategori">Nama Kategori</label>
-          <input type="text" id="kategori" name="kategori"
-            class="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-[#3B378B]" value="Makanan" />
+      <form class="space-y-4">
+        <div class="flex flex-col">
+          <label class="mb-2 text-sm">Nama Customer</label>
+          <input type="text" name="nama_customer" required
+            class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
         </div>
 
-        <button type="submit" class="w-full bg-[#3B378B] hover:bg-[#524CC3] text-white py-2 rounded">
+        <div class="flex flex-col">
+          <label class="mb-2 text-sm">Jumlah</label>
+          <input type="number" name="jumlah" min="1" required
+            class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
+        </div>
+
+        <div class="flex flex-col">
+          <label class="mb-2 text-sm">Total Harga</label>
+          <input type="text" name="total_harga" readonly
+            class="p-2 border border-gray-300 rounded bg-gray-100 cursor-not-allowed" />
+        </div>
+
+        <button type="submit" class="p-2 bg-[#3B378B] w-full text-white rounded hover:bg-[#524CC3] transition">
           Simpan
         </button>
       </form>

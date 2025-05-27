@@ -31,7 +31,7 @@
               />
             </svg>
 
-            <a class="cursor-pointer">
+            <a href="/pages/profil.php" class="cursor-pointer">
               <span>Administrator</span>
             </a>
           </div>

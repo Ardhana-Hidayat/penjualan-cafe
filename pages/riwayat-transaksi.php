@@ -18,7 +18,7 @@
     <div class="flex flex-col flex-1 overflow-auto h-screen">
       <!-- Topbar -->
       <div class="bg-white p-6 flex justify-between items-center shadow">
-        <h3 class="text-xl">Halaman Detail Transaksi</h3>
+        <h3 class="text-xl">Halaman Riwayat Transaksi</h3>
         <div class="flex gap-2 p-2 rounded-md border border-[#1E1B57]">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -33,7 +33,7 @@
       <div class="p-6 flex items-start space-x-6">
         <!-- Cards and Charts -->
         <div class="bg-white p-6 rounded-md shadow space-y-4 w-full">
-          <h3 class="text-left">Data Detail Transaksi</h3>
+          <h3 class="text-left">Data Riwayat Transaksi</h3>
           <hr />
           <table class="w-full text-sm border border-gray-400 border-collapse">
             <thead class="bg-gray-100">
