@@ -1,3 +1,14 @@
+<?php
+session_start();
+
+// Cek apakah pengguna sudah login
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
+    // Jika belum login, arahkan ke halaman login
+    header("location: auth/login.php?status=not_logged_in");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="id">
   <head>

@@ -5,8 +5,8 @@
         <h3 class="text-md">PENJUALAN CAFE</h3>
     </div>
 
-    <a href="/pages/dashboard.php" class="flex gap-2 py-3 px-4 text-sm hover:bg-[#1E1B57] transition"><svg
-            width="20" height="20" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <a href="/pages/dashboard.php" class="flex gap-2 py-3 px-4 text-sm hover:bg-[#1E1B57] transition"><svg width="20"
+            height="20" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
                 d="M6 19.0469H9V13.0469H15V19.0469H18V10.0469L12 5.54688L6 10.0469V19.0469ZM4 21.0469V9.04688L12 3.04688L20 9.04688V21.0469H13V15.0469H11V21.0469H4Z"
                 fill="#D6D6D6" />
@@ -64,13 +64,12 @@
         <span>Laporan</span></a>
 
     <div class="mt-auto flex gap-2 justify-center text-center py-6 cursor-pointer">
-        <a href="/auth/login.php" class="flex gap-2 py-3 px-4 text-sm">
+        <a href="../auth/action/logout.php" class="flex gap-2 py-3 px-4 text-sm">
             <svg width="20" height="24" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                     d="M5 21.0312C4.45 21.0312 3.97933 20.8356 3.588 20.4443C3.19667 20.0529 3.00067 19.5819 3 19.0312V5.03125C3 4.48125 3.196 4.01058 3.588 3.61925C3.98 3.22792 4.45067 3.03192 5 3.03125H12V5.03125H5V19.0312H12V21.0312H5ZM16 17.0312L14.625 15.5813L17.175 13.0312H9V11.0312H17.175L14.625 8.48125L16 7.03125L21 12.0312L16 17.0312Z"
                     fill="#D6D6D6" />
             </svg>
-
             <span>Logout</span>
         </a>
     </div>

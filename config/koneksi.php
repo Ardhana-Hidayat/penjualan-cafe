@@ -4,9 +4,9 @@
     $password = '';             
     $database = 'sales'; 
 
-    $con = mysqli_connect($host, $username, $password, $database);
+    $link = mysqli_connect($host, $username, $password, $database);
 
-    if (!$con) {
+    if (!$link) {
         die("Koneksi ke database gagal: " . mysqli_connect_error());
     } {
         echo "Koneksi berhasil";
