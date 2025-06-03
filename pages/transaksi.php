@@ -1,22 +1,67 @@
+<?php
+// pages/transaksi.php
+session_start();
+
+include '../config/koneksi.php';
+
+// --- Ambil Data Produk untuk Tampilan --- (Tidak ada perubahan di sini)
+$products = [];
+$product_query = "SELECT p.id, p.name AS product_name, p.price, p.stock, c.name AS category_name 
+                  FROM products AS p 
+                  INNER JOIN category AS c ON p.idCategory = c.id 
+                  ORDER BY p.name ASC";
+$product_result = mysqli_query($link, $product_query);
+if ($product_result) {
+  while ($row = mysqli_fetch_assoc($product_result)) {
+    $products[] = $row;
+  }
+} else {
+  error_log("Error mengambil produk: " . mysqli_error($link));
+  $products = [];
+}
+
+// --- Ambil Data Transaksi Sebelumnya untuk Tampilan ---
+$transactions = [];
+// Ubah nama field di query agar sesuai dengan tabel 'transactions' yang baru
+$transaction_query = "SELECT id, transactionCode, customerName, totalPrice AS total_amount_transaksi 
+                      FROM transactions ORDER BY createdAt DESC LIMIT 10";
+$transaction_result = mysqli_query($link, $transaction_query);
+if ($transaction_result) {
+  while ($row = mysqli_fetch_assoc($transaction_result)) {
+    // Sesuaikan nama field yang diambil dari DB ke variabel lokal
+    $transactions[] = [
+      'id' => $row['id'],
+      'transaction_code' => $row['transactionCode'],
+      'customer_name' => $row['customerName'],
+      'total_amount' => $row['total_amount_transaksi'] // Ambil dari alias
+    ];
+  }
+} else {
+  error_log("Error mengambil transaksi: " . mysqli_error($link));
+  $transactions = [];
+}
+
+mysqli_close($link);
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard</title>
+  <title>Penjualan Cafe | Transaksi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/assets/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body class="bg-gray-100 font-sans">
   <div class="flex min-h-screen">
-    <!-- Sidebar -->
     <?php include '../templates/sidebar.php'; ?>
 
     <div class="flex flex-col flex-1 overflow-auto h-screen">
-      <!-- Topbar -->
       <div class="bg-white p-6 flex justify-between items-center shadow">
         <h3 class="text-xl">Halaman Transaksi</h3>
         <div class="flex gap-2 p-2 rounded-md border border-[#1E1B57]">
@@ -25,13 +70,11 @@
               d="M19.938 8H21C21.5304 8 22.0391 8.21071 22.4142 8.58579C22.7893 8.96086 23 9.46957 23 10V14C23 14.5304 22.7893 15.0391 22.4142 15.4142C22.0391 15.7893 21.5304 16 21 16H19.938C19.6944 17.9334 18.7535 19.7114 17.292 21.0002C15.8304 22.2891 13.9487 23.0002 12 23V21C13.5913 21 15.1174 20.3679 16.2426 19.2426C17.3679 18.1174 18 16.5913 18 15V9C18 7.4087 17.3679 5.88258 16.2426 4.75736C15.1174 3.63214 13.5913 3 12 3C10.4087 3 8.88258 3.63214 7.75736 4.75736C6.63214 5.88258 6 7.4087 6 9V16H3C2.46957 16 1.96086 15.7893 1.58579 15.4142C1.21071 15.0391 1 14.5304 1 14V10C1 9.46957 1.21071 8.96086 1.58579 8.58579C1.96086 8.21071 2.46957 8 3 8H4.062C4.30603 6.06689 5.24708 4.28927 6.70857 3.00068C8.17007 1.71208 10.0516 1.00108 12 1.00108C13.9484 1.00108 15.8299 1.71208 17.2914 3.00068C18.7529 4.28927 19.694 6.06689 19.938 8ZM3 10V14H4V10H3ZM20 10V14H21V10H20ZM7.76 15.785L8.82 14.089C9.77303 14.6861 10.8754 15.0019 12 15C13.1246 15.0019 14.227 14.6861 15.18 14.089L16.24 15.785C14.9693 16.5813 13.4996 17.0025 12 17C10.5004 17.0025 9.03067 16.5813 7.76 15.785Z"
               fill="#1E1B57" />
           </svg>
-
-          <span>Administrator</span>
+          <span>Profil</span>
         </div>
       </div>
 
       <div class="p-6 flex items-start space-x-6">
-        <!-- Card Tabel -->
         <div class="space-y-6 w-2/3">
           <div class="bg-white p-6 rounded-md shadow space-y-4">
             <h3 class="text-left">Data Transaksi</h3>
@@ -47,30 +90,37 @@
                 </tr>
               </thead>
               <tbody>
-                <tr class="text-center">
-                  <td class="border border-gray-400 px-4 py-3">1</td>
-                  <td class="border border-gray-400 px-4 py-3 text-left">ASH78K</td>
-                  <td class="border border-gray-400 px-4 py-3 text-left">Kurniawan</td>
-                  <td class="border border-gray-400 px-4 py-3 text-left">Rp. 25.000</td>
-                  <td class="border border-gray-400 px-4 py-3">
-                    <div class="flex justify-center gap-3">
-                      <button class="bg-[#5148FF] hover:bg-blue-500 rounded-md p-2" onclick="openModalEdit()">
-                        <svg width="13" height="13" viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path
-                            d="M13.8368 3.14373C13.5808 3.40814 13.3323 3.66477 13.3247 3.9214C13.3022 4.17025 13.5582 4.42689 13.7992 4.66796C14.1607 5.0568 14.5146 5.40675 14.4995 5.78781C14.4845 6.16886 14.1004 6.56548 13.7163 6.95431L10.6062 10.1739L9.53682 9.06957L12.7374 5.77225L12.0144 5.02569L10.9451 6.1222L8.12105 3.20594L11.0128 0.227468C11.3065 -0.0758228 11.796 -0.0758228 12.0747 0.227468L13.8368 2.04722C14.1305 2.33495 14.1305 2.84044 13.8368 3.14373ZM0.5 11.0837L7.69933 3.64144L10.5233 6.5577L3.32401 14H0.5V11.0837Z"
-                            fill="white" />
-                        </svg>
-                      </button>
-                      <button class="bg-[#FF4848] hover:bg-red-500 rounded-md p-2" onclick="openModalHapus()">
-                        <svg width="13" height="13" viewBox="0 0 13 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path
-                            d="M1.51743 5.05263H11.4817L10.886 14.4211C10.8587 14.8487 10.6666 15.25 10.3488 15.5433C10.0309 15.8367 9.61124 16 9.17514 16H3.82486C3.38876 16 2.96907 15.8367 2.65122 15.5433C2.33336 15.25 2.14126 14.8487 2.114 14.4211L1.51743 5.05263ZM12.5 2.52632V4.21053H0.5V2.52632H3.07143V1.68421C3.07143 1.23753 3.25204 0.809144 3.57353 0.493294C3.89502 0.177443 4.33106 0 4.78571 0H8.21429C8.66894 0 9.10498 0.177443 9.42647 0.493294C9.74796 0.809144 9.92857 1.23753 9.92857 1.68421V2.52632H12.5ZM4.78571 2.52632H8.21429V1.68421H4.78571V2.52632Z"
-                            fill="white" />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <?php if (!empty($transactions)): ?>
+                  <?php $no = 1;
+                  foreach ($transactions as $transaction): ?>
+                    <tr class="text-center">
+                      <td class="border border-gray-400 px-4 py-3"><?php echo $no++; ?></td>
+                      <td class="border border-gray-400 px-4 py-3 text-left">
+                        <?php echo htmlspecialchars($transaction['transaction_code']); ?>
+                      </td>
+                      <td class="border border-gray-400 px-4 py-3 text-left">
+                        <?php echo htmlspecialchars($transaction['customer_name']); ?>
+                      </td>
+                      <td class="border border-gray-400 px-4 py-3 text-left">Rp.
+                        <?php echo htmlspecialchars(number_format($transaction['total_amount'], 0, ',', '.')); ?>
+                      </td>
+                      <td class="border border-gray-400 px-4 py-3">
+                        <div class="flex justify-center gap-3">
+                          <button class="bg-[#5148FF] hover:bg-blue-500 rounded-md p-2">
+                            <a href="print_receipt.php?transaction_id=<?php echo htmlspecialchars($transaction['id']); ?>"
+                              target="_blank" class="bg-[#5148FF] hover:bg-blue-500 text-white rounded-md p-2">
+                              Struk
+                            </a>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr class="text-center">
+                    <td colspan="5" class="border border-gray-400 px-4 py-3">Belum ada transaksi sebelumnya.</td>
+                  </tr>
+                <?php endif; ?>
               </tbody>
             </table>
           </div>
@@ -84,56 +134,89 @@
                   <th class="font-medium border border-gray-400 px-4 py-3">No</th>
                   <th class="font-medium border border-gray-400 px-4 py-3">Nama Produk</th>
                   <th class="font-medium border border-gray-400 px-4 py-3">Harga Satuan</th>
+                  <th class="font-medium border border-gray-400 px-4 py-3">Stok</th>
                   <th class="font-medium border border-gray-400 px-4 py-3">Action</th>
                 </tr>
               </thead>
               <tbody>
-                <tr class="text-center">
-                  <td class="border border-gray-400 px-4 py-3">1</td>
-                  <td class="border border-gray-400 px-4 py-3 text-left">Americano</td>
-                  <td class="border border-gray-400 px-4 py-3 text-left">Rp. 10.000</td>
-                  <td class="border border-gray-400 px-4 py-3">
-                    <button class="bg-white border rounded-md border-gray-300 hover:bg-gray-100 px-2 pb-1 text-xl">
-                      +
-                    </button>
-                  </td>
-                </tr>
+                <?php if (!empty($products)): ?>
+                  <?php $no = 1;
+                  foreach ($products as $product): ?>
+                    <tr class="text-center">
+                      <td class="border border-gray-400 px-4 py-3"><?php echo $no++; ?></td>
+                      <td class="border border-gray-400 px-4 py-3 text-left">
+                        <?php echo htmlspecialchars($product['product_name']); ?>
+                      </td>
+                      <td class="border border-gray-400 px-4 py-3 text-left">Rp.
+                        <?php echo htmlspecialchars(number_format($product['price'], 0, ',', '.')); ?>
+                      </td>
+                      <td class="border border-gray-400 px-4 py-3 text-center">
+                        <?php echo htmlspecialchars($product['stock']); ?>
+                      </td>
+                      <td class="border border-gray-400 px-4 py-3">
+                        <button class="bg-white border rounded-md border-gray-300 hover:bg-gray-100 px-2 pb-1 text-xl"
+                          onclick="addToCart(<?php echo htmlspecialchars(json_encode($product)); ?>)">
+                          +
+                        </button>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr class="text-center">
+                    <td colspan="5" class="border border-gray-400 px-4 py-3">Tidak ada produk tersedia.</td>
+                  </tr>
+                <?php endif; ?>
               </tbody>
             </table>
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-md shadow space-y-4 w-1/4">
+        <div class="bg-white p-6 rounded-md shadow space-y-4 w-1/3">
           <h4>Form Transaksi Baru</h4>
           <hr />
-          <form class="space-y-4">
-            <div class="flex flex-col">
-              <label class="mb-2 text-sm text-center">Belum ada produk<br>yang dipilih</label>
-              <div class="mb-4">
+          <form class="space-y-4" id="transaction-form" action="../db_service/transaction/transaction_service.php"
+            method="POST">
+            <input type="hidden" name="transactionCode" id="transaction_code">
+            <input type="hidden" name="products_json" id="products_json">
 
+            <div class="flex flex-col">
+              <label class="mb-2 text-sm">Produk yang Dipilih</label>
+              <div id="cart-items-container" class="mb-4">
+                <p class="text-gray-500 text-center text-sm" id="empty-cart-message">Belum ada produk<br>yang dipilih
+                </p>
               </div>
             </div>
-
+            <hr>
             <div class="flex flex-col">
               <label class="mb-2 text-sm">Nama Customer</label>
-              <input type="text" name="nama_customer" required
-                class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
-            </div>
-
-            <div class="flex flex-col">
-              <label class="mb-2 text-sm">Jumlah</label>
-              <input type="number" name="jumlah" min="1" required
+              <input type="text" name="customerName" id="customer_name" required
                 class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
             </div>
 
             <div class="flex flex-col">
               <label class="mb-2 text-sm">Total Harga</label>
-              <input type="text" name="total_harga" readonly
-                class="p-2 border border-gray-300 rounded bg-gray-100 cursor-not-allowed" />
+              <input type="text" name="total_amount_display" id="total_amount_display" readonly
+                class="p-2 border border-gray-300 rounded bg-gray-100 cursor-not-allowed" value="0,00" /> <input
+                type="hidden" name="totalPrice" id="total_amount_hidden" value="0">
             </div>
 
-            <button type="submit" class="p-2 bg-[#3B378B] w-full text-white rounded hover:bg-[#524CC3] transition">
-              Simpan
+            <div class="flex flex-col">
+              <label class="mb-2 text-sm">Jumlah Bayar</label>
+              <input type="text" name="paid_amount_display" id="paid_amount_display"
+                class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]"
+                value="0" /> <input type="hidden" name="paidAmount" id="paid_amount_hidden" value="0">
+            </div>
+
+            <div class="flex flex-col">
+              <label class="mb-2 text-sm">Kembalian</label>
+              <input type="text" name="change_amount_display" id="change_amount_display" readonly
+                class="p-2 border border-gray-300 rounded bg-gray-100 cursor-not-allowed" value="0,00" /> <input
+                type="hidden" name="changeAmount" id="change_amount_hidden" value="0">
+            </div>
+
+            <button type="submit" name="save_transaction"
+              class="p-2 bg-[#3B378B] w-full text-white rounded hover:bg-[#524CC3] transition">
+              Simpan Transaksi
             </button>
           </form>
         </div>
@@ -141,77 +224,322 @@
     </div>
   </div>
 
-  <!-- Modal edit -->
-  <div id="modal-edit" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-lg w-96 p-6 relative">
-      <!-- Close button -->
-      <button onclick="closeModalEdit()" class="absolute text-2xl top-5 right-5 text-gray-400 hover:text-gray-600">
-        &times;
-      </button>
-
-      <h2 class="text-md mb-6">Form Edit Transaksi</h2>
-
-      <form class="space-y-4">
-        <div class="flex flex-col">
-          <label class="mb-2 text-sm">Nama Customer</label>
-          <input type="text" name="nama_customer" required
-            class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
-        </div>
-
-        <div class="flex flex-col">
-          <label class="mb-2 text-sm">Jumlah</label>
-          <input type="number" name="jumlah" min="1" required
-            class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
-        </div>
-
-        <div class="flex flex-col">
-          <label class="mb-2 text-sm">Total Harga</label>
-          <input type="text" name="total_harga" readonly
-            class="p-2 border border-gray-300 rounded bg-gray-100 cursor-not-allowed" />
-        </div>
-
-        <button type="submit" class="p-2 bg-[#3B378B] w-full text-white rounded hover:bg-[#524CC3] transition">
-          Simpan
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal hapus -->
-  <div id="modal-delete" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-lg w-96 p-6 relative">
-      <!-- Close button -->
-      <button onclick="closeModalHapus()" class="absolute text-2xl top-5 right-5 text-gray-400 hover:text-gray-600">
-        &times;
-      </button>
-
-      <h2 class="text-md mb-6">Konfirmasi Hapus</h2>
-
-      <form>
-        <label class="block text-sm text-gray-700 mb-2" for="kategori">Anda yakin untuk menghapus " "?</label>
-        <br />
-        <button type="submit" class="w-full bg-[#FF4848] hover:bg-[#FF6464] text-white py-2 rounded">
-          Hapus
-        </button>
-      </form>
-    </div>
-  </div>
-
   <script>
-    function openModalEdit() {
-      document.getElementById("modal-edit").classList.remove("hidden");
+    // Inisialisasi cart dari localStorage saat halaman dimuat
+    let cart = JSON.parse(localStorage.getItem('pos_cart')) || [];
+    console.log('DEBUG: Cart initialized from localStorage:', cart);
+    console.log('DEBUG: localStorage "pos_cart" content:', localStorage.getItem('pos_cart'));
+
+    // Fungsi helper untuk menyimpan/memuat cart dari localStorage
+    function saveCartToLocalStorage() {
+      localStorage.setItem('pos_cart', JSON.stringify(cart));
     }
 
-    function closeModalEdit() {
-      document.getElementById("modal-edit").classList.add("hidden");
-    }
-    function openModalHapus() {
-      document.getElementById("modal-delete").classList.remove("hidden");
+    function loadCartFromLocalStorage() {
+      const storedCart = localStorage.getItem('pos_cart');
+      try {
+        if (storedCart) {
+          cart = JSON.parse(storedCart);
+        } else {
+          cart = [];
+        }
+      } catch (e) {
+        console.error("Error parsing cart from localStorage:", e);
+        cart = [];
+        localStorage.removeItem('pos_cart');
+      }
     }
 
-    function closeModalHapus() {
-      document.getElementById("modal-delete").classList.add("hidden");
+    // Fungsi formatRupiah (diubah untuk hanya menghasilkan angka murni, tanpa 'Rp.' atau koma desimal)
+    function formatRupiah(angka) {
+      if (angka === null || isNaN(angka)) {
+        return "0"; // Default ke '0' (tanpa desimal untuk input)
+      }
+      let num = parseFloat(angka);
+      // Jika Anda ingin ribuan dengan titik (misal 10.000) tanpa 'Rp.' dan tanpa koma desimal
+      // Angka negatif juga ditangani
+      let sign = num < 0 ? '-' : '';
+      let absNum = Math.abs(num);
+      let parts = absNum.toString().split('.');
+      let integerPart = parts[0].split('').reverse().join('').match(/\d{1,3}/g).join('.').split('').reverse().join('');
+      let decimalPart = parts.length > 1 ? '.' + parts[1] : ''; // Gunakan '.' sebagai pemisah desimal jika ada
+
+      return sign + integerPart + decimalPart;
     }
+
+    // Fungsi untuk memperbarui tampilan keranjang
+    function updateCartDisplay() {
+      console.log('DEBUG: updateCartDisplay called. Current cart state:', cart);
+      const container = document.getElementById('cart-items-container');
+      container.innerHTML = '';
+      let total = 0;
+
+      if (cart.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center text-sm" id="empty-cart-message">Belum ada produk<br>yang dipilih</p>';
+        // Gunakan '0' langsung untuk default input tampilan, bukan formatRupiah(0)
+        document.getElementById('total_amount_display').value = '0';
+        document.getElementById('total_amount_hidden').value = 0;
+        document.getElementById('paid_amount_display').value = '0'; // Default input '0'
+        document.getElementById('change_amount_display').value = '0'; // Default input '0'
+        document.getElementById('change_amount_hidden').value = 0;
+        document.getElementById('paid_amount_display').classList.add('bg-gray-100', 'cursor-not-allowed');
+        document.getElementById('paid_amount_display').readOnly = true;
+        document.getElementById('paid_amount_display').placeholder = '';
+
+        saveCartToLocalStorage();
+        console.log('DEBUG: Cart is empty, saved empty cart to localStorage.');
+        return;
+      }
+
+      document.getElementById('empty-cart-message')?.remove();
+      document.getElementById('paid_amount_display').classList.remove('bg-gray-100', 'cursor-not-allowed');
+      document.getElementById('paid_amount_display').readOnly = false;
+      document.getElementById('paid_amount_display').placeholder = 'Masukkan jumlah bayar';
+
+      cart.forEach((item, index) => {
+        const subtotal = item.quantity * item.price;
+        total += subtotal;
+
+        const itemDiv = document.createElement('div');
+        itemDiv.classList.add('flex', 'justify-between', 'items-center', 'mb-2', 'border-b', 'pb-2');
+        itemDiv.innerHTML = `
+                <div>
+                    <span class="text-sm">${item.product_name}</span><br>
+                    <span class="text-gray-600 text-xs">${formatRupiah(item.price)} x ${item.quantity}</span>
+                </div>
+                <div class="flex items-center gap-5">
+                    <span class="font-medium">${formatRupiah(subtotal)}</span>
+                    <button class="bg-white border rounded-md border-gray-300 hover:bg-gray-100 px-2 text-xl"
+                            onclick="removeFromCart(${index})">
+                        -
+                    </button>
+                </div>
+            `;
+        container.appendChild(itemDiv);
+      });
+
+      document.getElementById('total_amount_display').value = formatRupiah(total); // Menggunakan formatRupiah baru
+      document.getElementById('total_amount_hidden').value = total;
+      calculateChange();
+
+      saveCartToLocalStorage();
+      console.log('DEBUG: Cart saved to localStorage.');
+    }
+
+    // Fungsi addToCart, removeFromCart (tidak ada perubahan)
+    function addToCart(product) {
+      console.log('DEBUG: addToCart called for product:', product);
+      const existingItemIndex = cart.findIndex(item => item.id === product.id);
+
+      if (existingItemIndex > -1) {
+        if (cart[existingItemIndex].quantity < product.stock) {
+          cart[existingItemIndex].quantity++;
+          Swal.fire({
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, icon: 'success',
+            title: `1x ${product.product_name} ditambahkan`, width: '300px'
+          });
+        } else {
+          Swal.fire({
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, icon: 'warning',
+            title: `Stok ${product.product_name} tidak cukup.`, width: '350px'
+          });
+          return;
+        }
+      } else {
+        if (product.stock > 0) {
+          cart.push({ ...product, quantity: 1 });
+          Swal.fire({
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, icon: 'success',
+            title: `${product.product_name} ditambahkan`, width: '300px'
+          });
+        } else {
+          Swal.fire({
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, icon: 'warning',
+            title: `${product.product_name} tidak tersedia (stok kosong).`, width: '400px'
+          });
+          return;
+        }
+      }
+      updateCartDisplay();
+    }
+
+    function removeFromCart(index) {
+      if (cart[index].quantity > 1) {
+        cart[index].quantity--;
+        Swal.fire({
+          toast: true, position: 'top-end', showConfirmButton: false, timer: 1000, icon: 'success',
+          title: `1x ${cart[index].product_name} dikurangi`, width: '300px'
+        });
+      } else {
+        Swal.fire({
+          title: 'Hapus Item', text: `Anda yakin ingin menghapus "${cart[index].product_name}" dari keranjang?`, icon: 'warning',
+          showCancelButton: true, confirmButtonText: 'Ya, Hapus!', cancelButtonText: 'Batal', reverseButtons: true, width: '350px'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            cart.splice(index, 1);
+            updateCartDisplay();
+            Swal.fire({
+              toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, icon: 'success',
+              title: 'Produk dihapus dari keranjang', width: '300px'
+            });
+          }
+        });
+        return;
+      }
+      updateCartDisplay();
+    }
+
+    // Fungsi calculateChange (diperbaiki akses ID dan logika)
+    function calculateChange() {
+      const totalAmount = parseFloat(document.getElementById('total_amount_hidden').value) || 0;
+      let paidAmountText = document.getElementById('paid_amount_display').value;
+      // Hanya hapus spasi dan titik ribuan, jangan hapus koma desimal jika ada
+      paidAmountText = paidAmountText.replace(/\s+/g, '').replace(/\./g, '');
+      const paidAmount = parseFloat(paidAmountText) || 0;
+
+      document.getElementById('paid_amount_hidden').value = paidAmount;
+
+      const change = paidAmount - totalAmount;
+      document.getElementById('change_amount_display').value = formatRupiah(change); // Gunakan formatRupiah baru
+      document.getElementById('change_amount_hidden').value = change;
+    }
+
+    // Event listener untuk input jumlah bayar (paid_amount_display)
+    document.getElementById('paid_amount_display').addEventListener('input', function () {
+      // Membersihkan string: hapus semua spasi dan titik (pemisah ribuan)
+      // Koma (pemisah desimal) akan tetap ada jika user mengetiknya, lalu parseFloat akan menanganinya
+      let value = this.value.replace(/\s+/g, '').replace(/\./g, '');
+
+      // Hanya tampilkan '0' jika input kosong atau tidak valid setelah dibersihkan
+      if (value === '') {
+        this.value = '0'; // Default input 0
+        calculateChange();
+        return;
+      }
+
+      // Jika input valid angka, format ulang dan tampilkan
+      let numValue = parseFloat(value);
+      if (isNaN(numValue)) { // Jika bukan angka (misal user mengetik 'abc')
+        this.value = '0'; // Default input 0
+      } else {
+        this.value = formatRupiah(numValue); // Gunakan formatRupiah baru
+      }
+      calculateChange();
+    });
+
+    // Event listener untuk blur jumlah bayar (paid_amount_display)
+    document.getElementById('paid_amount_display').addEventListener('blur', function () {
+      // Membersihkan string dengan cara yang sama
+      let value = this.value.replace(/\s+/g, '').replace(/\./g, '');
+      let numValue = parseFloat(value);
+
+      // Jika saat blur, nilai input kosong atau 0 (setelah dibersihkan), tampilkan "0"
+      if (isNaN(numValue) || numValue === 0) {
+        this.value = '0'; // Default input 0
+      } else {
+        this.value = formatRupiah(numValue); // Gunakan formatRupiah baru
+      }
+    });
+
+    // Event listener untuk submit form transaksi (tetap sama)
+    // Event listener untuk submit form transaksi
+    // Event listener untuk submit form transaksi
+    document.getElementById('transaction-form').addEventListener('submit', function (event) {
+      event.preventDefault(); // Mencegah submit default
+
+      const customerName = document.getElementById('customer_name').value.trim();
+      const totalAmount = parseFloat(document.getElementById('total_amount_hidden').value);
+      const paidAmount = parseFloat(document.getElementById('paid_amount_hidden').value);
+
+      if (cart.length === 0) {
+        Swal.fire('Peringatan!', 'Keranjang masih kosong.', 'warning'); return;
+      }
+      if (customerName === '') {
+        Swal.fire('Peringatan!', 'Nama customer tidak boleh kosong.', 'warning'); return;
+      }
+      if (totalAmount <= 0) {
+        Swal.fire('Peringatan!', 'Total harga harus lebih dari Rp. 0.', 'warning'); return;
+      }
+      if (paidAmount < totalAmount) {
+        Swal.fire('Peringatan!', 'Jumlah bayar tidak mencukupi.', 'warning'); return;
+      }
+      if (paidAmount <= 0) {
+        Swal.fire('Peringatan!', 'Jumlah bayar harus lebih dari Rp. 0.', 'warning'); return;
+      }
+
+      const timestamp = Date.now().toString().slice(-6);
+      const transactionCode = 'TRN-' + timestamp; // Hasilnya akan menjadi 4 ('TRN-') + 6 digit = 10 karakter
+      document.getElementById('transaction_code').value = transactionCode;
+
+      // *** PERUBAHAN DI SINI ***
+      // Buat array baru yang hanya berisi id, price, dan quantity dari setiap produk di keranjang
+      const productsToSend = cart.map(item => ({
+        id: item.id,
+        // Mengirim harga satuan juga, meskipun akan diverifikasi di backend
+        price: item.price,
+        quantity: item.quantity
+      }));
+
+      // Masukkan string JSON dari productsToSend ke input hidden products_json
+      document.getElementById('products_json').value = JSON.stringify(productsToSend);
+
+      // *** INI ADALAH PENAMBAHAN UNTUK MEMASTIKAN 'save_transaction' TERKIRIM ***
+      const saveTransactionInput = document.createElement('input');
+      saveTransactionInput.type = 'hidden';
+      saveTransactionInput.name = 'save_transaction'; // Nama yang diharapkan oleh backend
+      saveTransactionInput.value = '1'; // Nilai apapun, yang penting ada
+      this.appendChild(saveTransactionInput);
+      // *******************************************************************
+
+      this.submit();
+    });
+
+    // Logika SweetAlert2 untuk notifikasi status (dari URL)
+    window.addEventListener('DOMContentLoaded', (event) => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const status = urlParams.get('status');
+      const message = urlParams.get('message');
+
+      if (status) {
+        let title = '';
+        let text = '';
+        let icon = '';
+
+        switch (status) {
+          case 'transaction_success':
+            title = 'Transaksi Berhasil!';
+            text = 'Transaksi telah berhasil disimpan.';
+            icon = 'success';
+            localStorage.removeItem('pos_cart'); // Menggunakan kunci 'pos_cart'
+            break;
+          case 'transaction_failed':
+            title = 'Transaksi Gagal!';
+            text = message || 'Terjadi kesalahan saat menyimpan transaksi.';
+            icon = 'error';
+            break;
+          case 'not_enough_stock':
+            title = 'Transaksi Gagal!';
+            text = message || 'Stok produk tidak mencukupi.';
+            icon = 'warning';
+            break;
+          case 'invalid_data':
+            title = 'Peringatan!';
+            text = message || 'Data transaksi tidak lengkap atau tidak valid.';
+            icon = 'warning';
+            break;
+          default:
+            return;
+        }
+
+        Swal.fire({
+          title: title, text: text, icon: icon, confirmButtonText: 'OK', width: '350px'
+        }).then(() => {
+          const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+          window.history.replaceState({ path: newUrl }, '', newUrl);
+        });
+      }
+      updateCartDisplay();
+    });
   </script>
 </body>
 

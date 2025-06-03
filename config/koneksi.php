@@ -8,7 +8,5 @@
 
     if (!$link) {
         die("Koneksi ke database gagal: " . mysqli_connect_error());
-    } {
-        echo "Koneksi berhasil";
-    }
+    } 
 ?>

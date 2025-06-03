@@ -3,42 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login Akun</title>
+    <title>Penjualan Cafe | Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/assets/styles.css">
-    <style>
-        /* Untuk pesan error/sukses */
-        .message {
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-        }
-        .message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
   <body class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
       <h2 class="text-2xl text-left mb-6">Login</h2>
-
-      <?php
-      // PHP untuk menampilkan pesan dari proses login
-      if (isset($_GET['status'])) {
-          if ($_GET['status'] == 'failed') {
-              echo '<div class="message error">Username atau password salah.</div>';
-          } elseif ($_GET['status'] == 'empty_fields') {
-              echo '<div class="message error">Username dan password tidak boleh kosong.</div>';
-          } elseif ($_GET['status'] == 'captcha_wrong') {
-              echo '<div class="message error">Captcha salah, coba lagi.</div>';
-          } elseif ($_GET['status'] == 'not_logged_in') {
-              echo '<div class="message error">Anda harus login untuk mengakses halaman ini.</div>';
-          }
-      }
-      ?>
 
       <form
         id="login-form"
@@ -92,8 +64,7 @@
         </button>
         <p class="text-sm text-center mt-2">
           Belum mempunyai akun?
-          <a href="register.php" class="text-yellow-500 hover:underline" >Register</a
-          >
+          <a href="register.php" class="text-yellow-500 hover:underline" >Register</a>
         </p>
       </form>
     </div>
@@ -107,7 +78,7 @@
           captcha += chars[Math.floor(Math.random() * chars.length)];
         }
         document.getElementById("captcha-value").value = captcha;
-        sessionStorage.setItem('generatedCaptcha', captcha); // Simpan di session storage
+        sessionStorage.setItem('generatedCaptcha', captcha); 
       }
 
       document
@@ -118,17 +89,74 @@
           const captchaMessageElement = document.getElementById("captcha-message");
 
           if (userCaptcha !== generatedCaptcha) {
-            event.preventDefault(); // Mencegah form disubmit
+            event.preventDefault(); 
             captchaMessageElement.textContent = "Captcha salah, coba lagi.";
             captchaMessageElement.style.color = "red";
-            generateCaptcha(); // Regenerasi captcha baru
-            document.getElementById("captcha-input").value = ""; // Kosongkan input captcha
+            generateCaptcha(); 
+            document.getElementById("captcha-input").value = ""; 
           } else {
             captchaMessageElement.textContent = "";
           }
         });
 
       window.onload = generateCaptcha;
+
+      // Logika SweetAlert
+      window.addEventListener('DOMContentLoaded', (event) => {
+          const urlParams = new URLSearchParams(window.location.search);
+          const status = urlParams.get('status');
+
+          if (status) {
+              let title = '';
+              let text = '';
+              let icon = '';
+
+              switch (status) {
+                  case 'failed':
+                      title = 'Login Gagal!';
+                      text = 'Username atau password salah.';
+                      icon = 'error';
+                      break;
+                  case 'empty_fields':
+                      title = 'Peringatan!';
+                      text = 'Username dan password tidak boleh kosong.';
+                      icon = 'warning';
+                      break;
+                  case 'captcha_wrong':
+                      title = 'Gagal!';
+                      text = 'Captcha salah, coba lagi.';
+                      icon = 'error';
+                      break;
+                  case 'not_logged_in':
+                      title = 'Akses Ditolak!';
+                      text = 'Anda harus login untuk mengakses halaman ini.';
+                      icon = 'warning';
+                      break;
+                  case 'registration_success': 
+                      title = 'Registrasi Berhasil!';
+                      text = 'Akun Anda telah berhasil dibuat. Silakan login.';
+                      icon = 'success';
+                      break;
+                  default:
+                      
+                      return; 
+              }
+
+              Swal.fire({
+                  title: title,
+                  text: text,
+                  icon: icon,
+                  confirmButtonText: 'OK',
+                  width: '300px'
+              }).then(() => {
+              
+                  const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                  window.history.replaceState({ path: newUrl }, '', newUrl);
+              });
+
+              generateCaptcha();
+          }
+      });
     </script>
   </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Web Penjualan</title>
+  <title>Penjualan Cafe</title>
   <!-- Import TailwindCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>

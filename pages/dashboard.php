@@ -1,12 +1,14 @@
 <?php
 session_start();
 
-// Cek apakah pengguna sudah login
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
-    // Jika belum login, arahkan ke halaman login
-    header("location: auth/login.php?status=not_logged_in");
+    
+    header("location: ../auth/login.php?status=not_logged_in");
     exit();
 }
+
+$loggedInUsername = $_SESSION['username'] ?? 'Pengguna';
+
 ?>
 
 <!DOCTYPE html>
@@ -14,10 +16,11 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard</title>
+    <title>Penjualan Cafe | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/assets/styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
 
   <body class="bg-gray-100 font-sans">
@@ -27,7 +30,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
       
       <div class="flex flex-col flex-1">
         <div class="bg-white p-6 flex justify-between items-center shadow">
-          <h3 class="text-xl">Dashboard</h3>
+          <h3 class="text-xl">Selamat Datang, <?php echo $loggedInUsername;?></h3>
           <div class="flex gap-2 p-2 rounded-md border border-[#1E1B57]">
             <svg
               width="20"
@@ -43,7 +46,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
             </svg>
 
             <a href="/pages/profil.php" class="cursor-pointer">
-              <span>Administrator</span>
+              <span>Profil</span>
             </a>
           </div>
         </div>
@@ -194,6 +197,27 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
             },
           },
         },
+      });
+
+      // Logika SweetAlert
+      window.addEventListener('DOMContentLoaded', (event) => {
+          const urlParams = new URLSearchParams(window.location.search);
+          const status = urlParams.get('status');
+          const username = "<?php echo htmlspecialchars($loggedInUsername); ?>";
+
+          if (status === 'login_success') {
+              Swal.fire({
+                  title: 'Berhasil Login!' ,
+                  text: 'Anda berhasil login sebagai ' + username + '.',
+                  icon: 'success',
+                  confirmButtonText: 'OK',
+                  width: '350px' 
+              }).then(() => {
+                  
+                  const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                  window.history.replaceState({ path: newUrl }, '', newUrl);
+              });
+          }
       });
     </script>
   </body>

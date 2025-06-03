@@ -56,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['username'] = $db_username;
 
             // Redirect ke halaman dashboard atau halaman utama yang dilindungi
-            header("location: ../../pages/dashboard.php"); //redirect ke dashboard
+            header("location: ../../pages/dashboard.php?status=login_success"); //redirect ke dashboard
             // Anda perlu membuat file dashboard.php ini di root proyek atau sesuaikan path-nya
             exit();
         } else {
