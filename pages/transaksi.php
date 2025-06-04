@@ -6,9 +6,9 @@ include '../config/koneksi.php';
 
 // --- Ambil Data Produk untuk Tampilan --- (Tidak ada perubahan di sini)
 $products = [];
-$product_query = "SELECT p.id, p.name AS product_name, p.price, p.stock, c.name AS category_name 
-                  FROM products AS p 
-                  INNER JOIN category AS c ON p.idCategory = c.id 
+$product_query = "SELECT p.id, p.name AS product_name, p.price, p.stock, c.name AS category_name
+                  FROM products AS p
+                  INNER JOIN category AS c ON p.idCategory = c.id
                   ORDER BY p.name ASC";
 $product_result = mysqli_query($link, $product_query);
 if ($product_result) {
@@ -20,20 +20,51 @@ if ($product_result) {
   $products = [];
 }
 
-// --- Ambil Data Transaksi Sebelumnya untuk Tampilan ---
+// --- Konfigurasi Paginasi untuk Transaksi ---
+$limit = 5; // Jumlah transaksi per halaman
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+// Pastikan halaman tidak kurang dari 1
+if ($page < 1) {
+  $page = 1;
+}
+$offset = ($page - 1) * $limit;
+
+// --- Ambil Total Data Transaksi (untuk paginasi) ---
+$total_transactions_query = "SELECT COUNT(*) AS total FROM transactions";
+$total_result = mysqli_query($link, $total_transactions_query);
+$total_rows = 0;
+if ($total_result) {
+  $row = mysqli_fetch_assoc($total_result);
+  $total_rows = $row['total'];
+} else {
+  error_log("Error mengambil total transaksi: " . mysqli_error($link));
+}
+$total_pages = ceil($total_rows / $limit);
+
+// Pastikan halaman tidak melebihi total halaman yang tersedia
+if ($page > $total_pages && $total_pages > 0) {
+  $page = $total_pages;
+  $offset = ($page - 1) * $limit; // Hitung ulang offset
+} else if ($total_pages == 0) {
+  $page = 1; // Jika tidak ada transaksi, tetap di halaman 1
+  $offset = 0;
+}
+
+
+// --- Ambil Data Transaksi Sebelumnya untuk Tampilan dengan Paginasi ---
 $transactions = [];
-// Ubah nama field di query agar sesuai dengan tabel 'transactions' yang baru
-$transaction_query = "SELECT id, transactionCode, customerName, totalPrice AS total_amount_transaksi 
-                      FROM transactions ORDER BY createdAt DESC LIMIT 10";
+$transaction_query = "SELECT id, transactionCode, customerName, totalPrice AS total_amount_transaksi
+                      FROM transactions ORDER BY createdAt DESC
+                      LIMIT $limit OFFSET $offset"; // Tambahkan LIMIT dan OFFSET
 $transaction_result = mysqli_query($link, $transaction_query);
+
 if ($transaction_result) {
   while ($row = mysqli_fetch_assoc($transaction_result)) {
-    // Sesuaikan nama field yang diambil dari DB ke variabel lokal
     $transactions[] = [
       'id' => $row['id'],
       'transaction_code' => $row['transactionCode'],
       'customer_name' => $row['customerName'],
-      'total_amount' => $row['total_amount_transaksi'] // Ambil dari alias
+      'total_amount' => $row['total_amount_transaksi']
     ];
   }
 } else {
@@ -42,6 +73,14 @@ if ($transaction_result) {
 }
 
 mysqli_close($link);
+
+// Ambil snap_token dan midtrans_order_id dari session (jika ada)
+$midtransSnapToken = $_SESSION['midtrans_snap_token'] ?? null;
+$midtransOrderId = $_SESSION['midtrans_order_id'] ?? null;
+
+// Hapus dari session setelah diambil agar tidak muncul lagi saat refresh
+unset($_SESSION['midtrans_snap_token']);
+unset($_SESSION['midtrans_order_id']);
 ?>
 
 <!DOCTYPE html>
@@ -55,6 +94,8 @@ mysqli_close($link);
   <link rel="stylesheet" href="/assets/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js"
+    data-client-key="SB-Mid-client-S0U2jUxeqcjuQZi8"></script>
 </head>
 
 <body class="bg-gray-100 font-sans">
@@ -125,6 +166,48 @@ mysqli_close($link);
             </table>
           </div>
 
+          <div class="flex justify-between items-center bg-white p-4 rounded-md shadow mt-4">
+            <span class="text-sm text-gray-700">Menampilkan
+              <?php echo min($offset + 1, $total_rows); ?>
+              sampai
+              <?php echo min($offset + $limit, $total_rows); ?>
+              dari
+              <?php echo $total_rows; ?>
+              entri
+            </span>
+            <div class="inline-flex space-x-2">
+              <?php if ($page > 1): ?>
+                <a href="?page=<?php echo $page - 1; ?>"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                  Previous
+                </a>
+              <?php else: ?>
+                <span class="px-4 py-2 text-sm font-medium text-gray-500 bg-gray-100 rounded-md cursor-not-allowed">
+                  Previous
+                </span>
+              <?php endif; ?>
+
+              <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                <a href="?page=<?php echo $i; ?>"
+                  class="px-4 py-2 text-sm font-medium rounded-md
+                          <?php echo ($i == $page) ? 'bg-[#3B378B] text-white' : 'text-gray-700 bg-gray-200 hover:bg-gray-300'; ?>">
+                  <?php echo $i; ?>
+                </a>
+              <?php endfor; ?>
+
+              <?php if ($page < $total_pages): ?>
+                <a href="?page=<?php echo $page + 1; ?>"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                  Next
+                </a>
+              <?php else: ?>
+                <span class="px-4 py-2 text-sm font-medium text-gray-500 bg-gray-100 rounded-md cursor-not-allowed">
+                  Next
+                </span>
+              <?php endif; ?>
+            </div>
+          </div>
+
           <div class="bg-white p-6 rounded-md shadow space-y-4">
             <h3 class="text-left">Data Produk</h3>
             <hr />
@@ -189,7 +272,7 @@ mysqli_close($link);
             <hr>
             <div class="flex flex-col">
               <label class="mb-2 text-sm">Nama Customer</label>
-              <input type="text" name="customerName" id="customer_name" required
+              <input type="text" name="customerName" id="customer_name"
                 class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3B378B]" />
             </div>
 
@@ -309,7 +392,7 @@ mysqli_close($link);
                 </div>
                 <div class="flex items-center gap-5">
                     <span class="font-medium">${formatRupiah(subtotal)}</span>
-                    <button class="bg-white border rounded-md border-gray-300 hover:bg-gray-100 px-2 text-xl"
+                    <button type="button" class="bg-white border rounded-md border-gray-300 hover:bg-gray-100 px-2 text-xl"
                             onclick="removeFromCart(${index})">
                         -
                     </button>
@@ -475,9 +558,9 @@ mysqli_close($link);
       // Buat array baru yang hanya berisi id, price, dan quantity dari setiap produk di keranjang
       const productsToSend = cart.map(item => ({
         id: item.id,
-        // Mengirim harga satuan juga, meskipun akan diverifikasi di backend
         price: item.price,
-        quantity: item.quantity
+        quantity: item.quantity,
+        name: item.product_name // PASTIKAN NAMA PRODUK JUGA DIKIRIMKAN DI SINI!
       }));
 
       // Masukkan string JSON dari productsToSend ke input hidden products_json
@@ -500,21 +583,91 @@ mysqli_close($link);
       const status = urlParams.get('status');
       const message = urlParams.get('message');
 
-      if (status) {
+      const snapToken = "<?php echo htmlspecialchars($midtransSnapToken ?? ''); ?>";
+      const midtransOrderId = "<?php echo htmlspecialchars($midtransOrderId ?? ''); ?>";
+
+      // DEBUGGING: Log snapToken dan midtransOrderId di frontend
+      console.log('DEBUG Frontend: Snap Token received:', snapToken);
+      console.log('DEBUG Frontend: Midtrans Order ID received:', midtransOrderId);
+      console.log('DEBUG Frontend: Status URL param:', status);
+
+
+      // --- Pemicu Midtrans Snap (Jika transaksi lokal berhasil disimpan) ---
+      if (status === 'transaction_success' && snapToken) {
+        console.log('DEBUG Frontend: Triggering Midtrans Snap for Order ID:', midtransOrderId);
+
+        // Langsung panggil snap.pay(), JANGAN ada SweetAlert sebelum ini
+        snap.pay(snapToken, {
+          onSuccess: function (result) {
+
+            console.log('Midtrans Success:', result);
+            localStorage.removeItem('pos_cart'); // Kosongkan keranjang setelah sukses
+            // Opsional: Redirect ke halaman struk atau konfirmasi akhir
+            // window.location.href = 'print_receipt.php?transaction_id=' + midtransOrderId; 
+            // Atau cukup refresh tampilan keranjang
+            updateCartDisplay(); // Refresh tampilan keranjang
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({ path: newUrl }, '', newUrl); // Bersihkan URL
+
+          },
+          onPending: function (result) {
+            console.log('Midtrans Pending:', result);
+            Swal.fire({
+              title: 'Pembayaran Tertunda!',
+              text: 'Pembayaran Anda sedang menunggu konfirmasi Midtrans.',
+              icon: 'info',
+              confirmButtonText: 'OK',
+              width: '350px'
+            }).then(() => {
+              // Tidak kosongkan keranjang, mungkin user ingin mencoba lagi nanti
+              updateCartDisplay(); // Refresh tampilan keranjang
+              const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+              window.history.replaceState({ path: newUrl }, '', newUrl);
+            });
+          },
+          onError: function (result) {
+            console.log('Midtrans Error:', result);
+            Swal.fire({
+              title: 'Pembayaran Gagal!',
+              text: 'Terjadi kesalahan saat memproses pembayaran Anda. Silakan coba lagi.',
+              icon: 'error',
+              confirmButtonText: 'OK',
+              width: '350px'
+            }).then(() => {
+              // Tidak kosongkan keranjang, mungkin user ingin mencoba lagi
+              updateCartDisplay(); // Refresh tampilan keranjang
+              const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+              window.history.replaceState({ path: newUrl }, '', newUrl);
+            });
+          },
+          onClose: function () {
+            console.log('Midtrans pop-up closed.');
+            Swal.fire({
+              title: 'Pembayaran Dibatalkan',
+              text: 'Anda menutup jendela pembayaran. Transaksi belum selesai.',
+              icon: 'info',
+              confirmButtonText: 'OK',
+              width: '350px'
+            }).then(() => {
+              // Tidak kosongkan keranjang, mungkin user ingin mencoba lagi
+              updateCartDisplay(); // Refresh tampilan keranjang
+              const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+              window.history.replaceState({ path: newUrl }, '', newUrl);
+            });
+          }
+        });
+      }
+      // --- Penanganan Status Lain (Jika transaksi lokal GAGAL disimpan) ---
+      else if (status) {
+        // Jika status bukan 'transaction_success', tampilkan SweetAlert sesuai
         let title = '';
         let text = '';
         let icon = '';
 
         switch (status) {
-          case 'transaction_success':
-            title = 'Transaksi Berhasil!';
-            text = 'Transaksi telah berhasil disimpan.';
-            icon = 'success';
-            localStorage.removeItem('pos_cart'); // Menggunakan kunci 'pos_cart'
-            break;
           case 'transaction_failed':
             title = 'Transaksi Gagal!';
-            text = message || 'Terjadi kesalahan saat menyimpan transaksi.';
+            text = message || 'Terjadi kesalahan saat menyimpan transaksi ke database lokal.';
             icon = 'error';
             break;
           case 'not_enough_stock':
@@ -538,6 +691,7 @@ mysqli_close($link);
           window.history.replaceState({ path: newUrl }, '', newUrl);
         });
       }
+      // Pastikan updateCartDisplay() dipanggil di akhir DOMContentLoaded
       updateCartDisplay();
     });
   </script>
