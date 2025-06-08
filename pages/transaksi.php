@@ -111,7 +111,9 @@ unset($_SESSION['midtrans_order_id']);
               d="M19.938 8H21C21.5304 8 22.0391 8.21071 22.4142 8.58579C22.7893 8.96086 23 9.46957 23 10V14C23 14.5304 22.7893 15.0391 22.4142 15.4142C22.0391 15.7893 21.5304 16 21 16H19.938C19.6944 17.9334 18.7535 19.7114 17.292 21.0002C15.8304 22.2891 13.9487 23.0002 12 23V21C13.5913 21 15.1174 20.3679 16.2426 19.2426C17.3679 18.1174 18 16.5913 18 15V9C18 7.4087 17.3679 5.88258 16.2426 4.75736C15.1174 3.63214 13.5913 3 12 3C10.4087 3 8.88258 3.63214 7.75736 4.75736C6.63214 5.88258 6 7.4087 6 9V16H3C2.46957 16 1.96086 15.7893 1.58579 15.4142C1.21071 15.0391 1 14.5304 1 14V10C1 9.46957 1.21071 8.96086 1.58579 8.58579C1.96086 8.21071 2.46957 8 3 8H4.062C4.30603 6.06689 5.24708 4.28927 6.70857 3.00068C8.17007 1.71208 10.0516 1.00108 12 1.00108C13.9484 1.00108 15.8299 1.71208 17.2914 3.00068C18.7529 4.28927 19.694 6.06689 19.938 8ZM3 10V14H4V10H3ZM20 10V14H21V10H20ZM7.76 15.785L8.82 14.089C9.77303 14.6861 10.8754 15.0019 12 15C13.1246 15.0019 14.227 14.6861 15.18 14.089L16.24 15.785C14.9693 16.5813 13.4996 17.0025 12 17C10.5004 17.0025 9.03067 16.5813 7.76 15.785Z"
               fill="#1E1B57" />
           </svg>
-          <span>Profil</span>
+          <a href="/pages/profil.php" class="cursor-pointer">
+            <span>Profil</span>
+          </a>
         </div>
       </div>
 
@@ -166,45 +168,36 @@ unset($_SESSION['midtrans_order_id']);
             </table>
           </div>
 
-          <div class="flex justify-between items-center bg-white p-4 rounded-md shadow mt-4">
-            <span class="text-sm text-gray-700">Menampilkan
-              <?php echo min($offset + 1, $total_rows); ?>
-              sampai
-              <?php echo min($offset + $limit, $total_rows); ?>
-              dari
-              <?php echo $total_rows; ?>
-              entri
-            </span>
+          <div class="flex justify-center items-center bg-white p-4 rounded-md shadow mt-4">
             <div class="inline-flex space-x-2">
               <?php if ($page > 1): ?>
                 <a href="?page=<?php echo $page - 1; ?>"
                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
-                  Previous
-                </a>
-              <?php else: ?>
-                <span class="px-4 py-2 text-sm font-medium text-gray-500 bg-gray-100 rounded-md cursor-not-allowed">
-                  Previous
-                </span>
-              <?php endif; ?>
+                  << </a>
+                  <?php else: ?>
+                    <span class="px-4 py-2 text-sm font-medium text-gray-500 bg-gray-100 rounded-md cursor-not-allowed">
+                      << </span>
+                      <?php endif; ?>
 
-              <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                <a href="?page=<?php echo $i; ?>"
-                  class="px-4 py-2 text-sm font-medium rounded-md
+                      <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                        <a href="?page=<?php echo $i; ?>"
+                          class="px-4 py-2 text-sm font-medium rounded-md
                           <?php echo ($i == $page) ? 'bg-[#3B378B] text-white' : 'text-gray-700 bg-gray-200 hover:bg-gray-300'; ?>">
-                  <?php echo $i; ?>
-                </a>
-              <?php endfor; ?>
+                          <?php echo $i; ?>
+                        </a>
+                      <?php endfor; ?>
 
-              <?php if ($page < $total_pages): ?>
-                <a href="?page=<?php echo $page + 1; ?>"
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
-                  Next
-                </a>
-              <?php else: ?>
-                <span class="px-4 py-2 text-sm font-medium text-gray-500 bg-gray-100 rounded-md cursor-not-allowed">
-                  Next
-                </span>
-              <?php endif; ?>
+                      <?php if ($page < $total_pages): ?>
+                        <a href="?page=<?php echo $page + 1; ?>"
+                          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                          >>
+                        </a>
+                      <?php else: ?>
+                        <span
+                          class="px-4 py-2 text-sm font-medium text-gray-500 bg-gray-100 rounded-md cursor-not-allowed">
+                          >>
+                        </span>
+                      <?php endif; ?>
             </div>
           </div>
 
@@ -593,22 +586,67 @@ unset($_SESSION['midtrans_order_id']);
 
 
       // --- Pemicu Midtrans Snap (Jika transaksi lokal berhasil disimpan) ---
+      // --- Pemicu Midtrans Snap (Dipicu setelah transaksi lokal berhasil disimpan) ---
       if (status === 'transaction_success' && snapToken) {
         console.log('DEBUG Frontend: Triggering Midtrans Snap for Order ID:', midtransOrderId);
 
-        // Langsung panggil snap.pay(), JANGAN ada SweetAlert sebelum ini
         snap.pay(snapToken, {
           onSuccess: function (result) {
-
             console.log('Midtrans Success:', result);
-            localStorage.removeItem('pos_cart'); // Kosongkan keranjang setelah sukses
-            // Opsional: Redirect ke halaman struk atau konfirmasi akhir
-            // window.location.href = 'print_receipt.php?transaction_id=' + midtransOrderId; 
-            // Atau cukup refresh tampilan keranjang
-            updateCartDisplay(); // Refresh tampilan keranjang
-            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-            window.history.replaceState({ path: newUrl }, '', newUrl); // Bersihkan URL
+            // Kosongkan keranjang dan update tampilan hanya JIKA transaksi benar-benar selesai
+            localStorage.removeItem('pos_cart');
+            updateCartDisplay();
 
+            // PANGGIL CETAK STRUK via AJAX/FETCH
+            if (midtransOrderId && midtransOrderId !== '0') {
+              const printUrl = 'print_receipt.php?transaction_id=' + midtransOrderId;
+              console.log('DEBUG: Attempting to print receipt via Fetch API to:', printUrl);
+
+              fetch(printUrl)
+                .then(response => {
+                  if (!response.ok) {
+                    console.error('DEBUG: HTTP error when calling print_receipt.php:', response.status, response.statusText);
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Cetak Struk Gagal!',
+                      text: 'Terjadi masalah saat mencoba mencetak struk. Periksa log PHP dan konsol browser.',
+                      width: '350px'
+                    });
+                  } else {
+                    console.log('DEBUG: print_receipt.php call successful (HTTP 200 OK).');
+                    Swal.fire({
+                      toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, icon: 'success',
+                      title: 'Struk berhasil dicetak!', width: '300px'
+                    });
+                  }
+                  return response.text();
+                })
+                .then(text => {
+                  if (text && text.trim() !== "") {
+                    console.warn("DEBUG: print_receipt.php returned unexpected output:", text);
+                  }
+                })
+                .catch(error => {
+                  console.error('DEBUG: Network or Fetch API error during receipt printing:', error);
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Error Koneksi!',
+                    text: 'Gagal mengirim permintaan cetak struk.',
+                    width: '350px'
+                  });
+                });
+            } else {
+              console.warn("DEBUG: midtransOrderId not valid for printing receipt (empty or 0).");
+              Swal.fire({
+                icon: 'info',
+                title: 'Transaksi Berhasil!',
+                text: 'Pembayaran berhasil, namun struk tidak dicetak otomatis karena ID transaksi tidak valid.',
+                width: '450px'
+              });
+            }
+            // Setelah semua aksi selesai, bersihkan URL.
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({ path: newUrl }, '', newUrl);
           },
           onPending: function (result) {
             console.log('Midtrans Pending:', result);
@@ -619,8 +657,7 @@ unset($_SESSION['midtrans_order_id']);
               confirmButtonText: 'OK',
               width: '350px'
             }).then(() => {
-              // Tidak kosongkan keranjang, mungkin user ingin mencoba lagi nanti
-              updateCartDisplay(); // Refresh tampilan keranjang
+              updateCartDisplay();
               const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
               window.history.replaceState({ path: newUrl }, '', newUrl);
             });
@@ -634,8 +671,7 @@ unset($_SESSION['midtrans_order_id']);
               confirmButtonText: 'OK',
               width: '350px'
             }).then(() => {
-              // Tidak kosongkan keranjang, mungkin user ingin mencoba lagi
-              updateCartDisplay(); // Refresh tampilan keranjang
+              updateCartDisplay();
               const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
               window.history.replaceState({ path: newUrl }, '', newUrl);
             });
@@ -649,8 +685,7 @@ unset($_SESSION['midtrans_order_id']);
               confirmButtonText: 'OK',
               width: '350px'
             }).then(() => {
-              // Tidak kosongkan keranjang, mungkin user ingin mencoba lagi
-              updateCartDisplay(); // Refresh tampilan keranjang
+              updateCartDisplay();
               const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
               window.history.replaceState({ path: newUrl }, '', newUrl);
             });

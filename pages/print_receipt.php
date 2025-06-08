@@ -1,284 +1,205 @@
 <?php
 // pages/print_receipt.php
-session_start();
+// Pastikan semua error dilaporkan dan dicatat untuk debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1); // Ini hanya akan tampil di log jika tidak ada output HTML
+ini_set('log_errors', 1);    // Pastikan error dicatat ke log
+ini_set('error_log', __DIR__ . '/../../php_error_log.log'); // Tentukan lokasi log error PHP Anda
 
-include '../config/koneksi.php'; // Sesuaikan path jika lokasi koneksi.php berbeda
+require '../vendor/autoload.php'; // Memuat autoload Composer
+include '../config/koneksi.php'; // Memuat koneksi database
 
-$transactionDetails = null;
-$transactionId = $_GET['transaction_id'] ?? null;
+// Menggunakan namespace untuk kelas Printer dan konektor
+use Mike42\Escpos\PrintConnectors\FilePrintConnector; // Untuk debugging cetak ke file
+use Mike42\Escpos\Printer;
+use Mike42\Escpos\PrintConnectors\WindowsPrintConnector; // Ini yang akan kita gunakan
 
-if (!$transactionId) {
-    die("ID Transaksi tidak ditemukan.");
-}
+error_log("DEBUG: print_receipt.php started. EXECUTION CONTEXT: " . (php_sapi_name() === 'cli' ? 'CLI' : 'WEB'));
 
-// --- Ambil Data Transaksi Utama ---
-// Tambahkan paidAmount dan changeAmount ke SELECT query
-$query_main = "SELECT id, transactionCode, customerName, totalPrice, paidAmount, changeAmount, createdAt 
-               FROM transactions 
-               WHERE id = ?";
-$stmt_main = mysqli_prepare($link, $query_main);
-
-if ($stmt_main === false) {
-    die("Error menyiapkan query utama: " . mysqli_error($link));
-}
-
-mysqli_stmt_bind_param($stmt_main, "i", $transactionId);
-mysqli_stmt_execute($stmt_main);
-$result_main = mysqli_stmt_get_result($stmt_main);
-
-if (mysqli_num_rows($result_main) == 0) {
-    die("Transaksi tidak ditemukan.");
-}
-$transaction = mysqli_fetch_assoc($result_main);
-mysqli_stmt_close($stmt_main);
-
-// --- Ambil Detail Transaksi (Item Produk yang Dibeli) ---
-$query_details = "SELECT td.quantity, td.totalPrice AS subtotal_item, 
-                         p.name AS product_name, p.price AS product_price 
-                  FROM detail_transactions AS td
-                  INNER JOIN products AS p ON td.productId = p.id
-                  WHERE td.transactionId = ?";
-$stmt_details = mysqli_prepare($link, $query_details);
-
-if ($stmt_details === false) {
-    die("Error menyiapkan query detail: " . mysqli_error($link));
-}
-
-mysqli_stmt_bind_param($stmt_details, "i", $transactionId);
-mysqli_stmt_execute($stmt_details);
-$result_details = mysqli_stmt_get_result($stmt_details);
-
-$items = [];
-if (mysqli_num_rows($result_details) > 0) {
-    while ($row = mysqli_fetch_assoc($result_details)) {
-        $items[] = $row;
+// --- Validasi dan Ambil transaction_id ---
+$transaction_id = 0; // Default nilai
+if (php_sapi_name() === 'cli') {
+    global $argv;
+    if (isset($argv[1])) {
+        $transaction_id = intval($argv[1]);
+        error_log("DEBUG: CLI detected. Got transaction_id from CLI arg: " . $transaction_id);
+    } else {
+        error_log("DEBUG: CLI detected, but no transaction_id provided as argument. Exiting.");
+        exit("Usage: php " . basename(__FILE__) . " <transaction_id>\n"); // Menggunakan exit() alih-alih die()
     }
+} else {
+    if (!isset($_GET['transaction_id']) || empty($_GET['transaction_id'])) {
+        error_log("DEBUG: Web detected, but transaction_id not found or empty in GET request. Exiting.");
+        exit("Transaction ID is required for printing the receipt."); // Menggunakan exit()
+    }
+    $transaction_id = intval($_GET['transaction_id']);
+    error_log("DEBUG: Web detected. Received transaction_id from GET: " . $transaction_id);
 }
-mysqli_stmt_close($stmt_details);
+
+if ($transaction_id <= 0) {
+    error_log("DEBUG: Invalid transaction_id received: " . $transaction_id . ". Exiting.");
+    exit("Invalid Transaction ID. Must be a positive integer."); // Menggunakan exit()
+}
+
+// --- Ambil Detail Transaksi Utama dari Database ---
+$transaction_data = null;
+$items_data = [];
+
+$stmt_transaction = mysqli_prepare($link, "SELECT id, transactionCode, customerName, totalPrice, paidAmount, changeAmount, createdAt FROM transactions WHERE id = ?");
+if ($stmt_transaction === false) {
+    $error_msg = "Failed to prepare main transaction query: " . mysqli_error($link);
+    error_log("DEBUG: " . $error_msg);
+    exit("Error retrieving transaction data. (DB prepare error: " . $error_msg . ")"); // Menggunakan exit()
+}
+mysqli_stmt_bind_param($stmt_transaction, "i", $transaction_id);
+error_log("DEBUG: Executing main transaction query for ID: " . $transaction_id);
+mysqli_stmt_execute($stmt_transaction);
+$result_transaction = mysqli_stmt_get_result($stmt_transaction);
+
+if ($result_transaction && mysqli_num_rows($result_transaction) > 0) {
+    $transaction_data = mysqli_fetch_assoc($result_transaction);
+    $local_transaction_id = $transaction_data['id'];
+    error_log("DEBUG: Transaction found. Local DB ID: " . $local_transaction_id . ", Code: " . $transaction_data['transactionCode']);
+
+    // --- Ambil Detail Item-item Transaksi ---
+    $stmt_items = mysqli_prepare($link, "SELECT
+                                            p.name AS product_name,
+                                            ti.quantity,
+                                            ti.totalPrice AS item_subtotal,
+                                            p.price AS product_price
+                                         FROM
+                                            detail_transactions ti
+                                         JOIN
+                                            products p ON ti.productId = p.id
+                                         WHERE
+                                            ti.transactionId = ?");
+    if ($stmt_items === false) {
+        $error_msg = "Failed to prepare transaction items query: " . mysqli_error($link);
+        error_log("DEBUG: " . $error_msg);
+        exit("Error retrieving transaction items. (Query preparation failed: " . $error_msg . ")"); // Menggunakan exit()
+    }
+    mysqli_stmt_bind_param($stmt_items, "i", $local_transaction_id);
+    error_log("DEBUG: Executing items query for transaction ID: " . $local_transaction_id);
+    mysqli_stmt_execute($stmt_items);
+    $result_items = mysqli_stmt_get_result($stmt_items);
+
+    if ($result_items) {
+        if (mysqli_num_rows($result_items) > 0) {
+            while ($row = mysqli_fetch_assoc($result_items)) {
+                $items_data[] = $row;
+            }
+            error_log("DEBUG: Successfully retrieved " . count($items_data) . " transaction items.");
+        } else {
+            error_log("DEBUG: No items found for transaction ID: " . $local_transaction_id . ". Receipt will indicate no items.");
+        }
+    } else {
+        $error_msg = "Failed to get result for transaction items query: " . mysqli_error($link);
+        error_log("DEBUG: " . $error_msg);
+        exit("Error retrieving transaction items. (Query execution failed: " . $error_msg . ")"); // Menggunakan exit()
+    }
+    mysqli_stmt_close($stmt_items);
+} else {
+    error_log("DEBUG: Transaction with ID " . $transaction_id . " not found in DB. Exiting.");
+    exit("Transaction with ID " . htmlspecialchars($transaction_id) . " not found."); // Menggunakan exit()
+}
 
 mysqli_close($link);
+error_log("DEBUG: Database connection closed.");
 
-// Fungsi untuk memformat angka sesuai standar (tanpa 'Rp.', dengan titik ribuan, koma desimal, 2 desimal)
-function formatRupiahDisplay($angka)
+function formatRupiahUntukStruk($angka)
 {
-    if ($angka === null || is_nan($angka)) {
-        return "0,00"; // Default dengan 2 desimal
-    }
-    $num = (float) $angka;
-    // Handle angka negatif
-    $sign = '';
-    if ($num < 0) {
-        $sign = '-';
-        $num = abs($num);
-    }
-
-    $parts = explode('.', (string) $num);
-    $integerPart = number_format((float) $parts[0], 0, ',', '.'); // Format integer
-    $decimalPart = isset($parts[1]) ? $parts[1] : '00';
-    $decimalPart = str_pad($decimalPart, 2, '0', STR_PAD_RIGHT); // Pastikan 2 desimal
-
-    return $sign . $integerPart . ',' . $decimalPart;
+    return number_format($angka, 0, '', '.');
 }
+
+// --- MULAI CETAK STRUK ---
+error_log("DEBUG: Starting printer connection attempt.");
+try {
+    $printer_name = "POS-58"; // GANTI DENGAN NAMA PRINTER ANDA YANG SESUAI DI "DEVICES AND PRINTERS"
+    error_log("DEBUG: Attempting to connect to printer: '" . $printer_name . "' using WindowsPrintConnector.");
+
+    $connector = new Mike42\Escpos\PrintConnectors\WindowsPrintConnector($printer_name);
+
+    // --- DEBUGGING KE FILE (UNCOMMENT UNTUK MENGAKTIFKAN INI SAJA) ---
+    // $rootDir = realpath(__DIR__ . '/../..') . DIRECTORY_SEPARATOR;
+    // $file_path = $rootDir . 'receipt_debug.txt';
+    // error_log("DEBUG: Attempting to connect to file: '" . $file_path . "' using FilePrintConnector.");
+    // $connector = new Mike42\Escpos\PrintConnectors\FilePrintConnector($file_path);
+
+
+    $printer = new Printer($connector);
+    error_log("DEBUG: Printer object successfully instantiated.");
+
+    /* Header Struk */
+    $printer->setJustification(Printer::JUSTIFY_CENTER);
+    $printer->text("===============================\n");
+    $printer->text("NAMA CAFE ANDA\n");
+    $printer->text("Alamat Cafe Anda\n");
+    $printer->text("Telp: 0812-XXXX-XXXX\n");
+    $printer->text("===============================\n");
+    $printer->text("\n");
+    error_log("DEBUG: Header text added.");
+
+    /* Detail Transaksi */
+    $printer->setJustification(Printer::JUSTIFY_LEFT);
+    $printer->text("No. Transaksi: " . htmlspecialchars($transaction_data['transactionCode']) . "\n");
+    $printer->text("Pelanggan    : " . htmlspecialchars($transaction_data['customerName']) . "\n");
+    $printer->text("Tanggal      : " . date('d/m/Y H:i:s', strtotime($transaction_data['createdAt'])) . "\n");
+    $printer->text("--------------------------------\n");
+    error_log("DEBUG: Transaction details added.");
+
+    /* Daftar Item */
+    if (empty($items_data)) {
+        $printer->text("--- Tidak ada item pada transaksi ini ---\n");
+        error_log("DEBUG: No items to print for this transaction.");
+    } else {
+        foreach ($items_data as $item) {
+            $product_name = substr($item['product_name'], 0, 20);
+            $qty = $item['quantity'];
+            $product_price = formatRupiahUntukStruk($item['product_price']);
+            $item_subtotal = formatRupiahUntukStruk($item['item_subtotal']);
+
+            $printer->text(sprintf(
+                "%-20s %3sx %-8s %10s\n",
+                $product_name,
+                $qty,
+                $product_price,
+                $item_subtotal
+            ));
+        }
+        error_log("DEBUG: Transaction items added.");
+    }
+    $printer->text("--------------------------------\n");
+
+    /* Total Pembayaran */
+    $printer->setJustification(Printer::JUSTIFY_LEFT);
+    $printer->text("TOTAL              : " . formatRupiahUntukStruk($transaction_data['totalPrice']) . "\n");
+    $printer->text("BAYAR              : " . formatRupiahUntukStruk($transaction_data['paidAmount']) . "\n");
+    $printer->text("KEMBALIAN          : " . formatRupiahUntukStruk($transaction_data['changeAmount']) . "\n");
+    $printer->text("\n");
+    error_log("DEBUG: Total payment details added.");
+
+    /* Footer Struk */
+    $printer->setJustification(Printer::JUSTIFY_CENTER);
+    $printer->text("Terima Kasih Atas Kunjungan Anda\n");
+    $printer->text("===============================\n");
+    error_log("DEBUG: Footer text added.");
+
+    $printer->cut();
+    error_log("DEBUG: Printer cut command sent.");
+    $printer->close();
+    error_log("DEBUG: Printer connection closed.");
+
+    // Hapus semua output HTML/JavaScript dari sini
+    // echo "<script>alert('Struk berhasil dicetak!'); window.close();</script>"; // DIHAPUS
+    error_log("DEBUG: Receipt printing completed successfully. No browser output.");
+
+} catch (Exception $e) {
+    $error_message = $e->getMessage();
+    error_log("FATAL ERROR: Could not print to this printer: " . $error_message);
+    // Hapus semua output HTML/JavaScript dari sini
+    // echo "<script>alert('Gagal mencetak struk: " . addslashes($error_message) . "\\n\\nPeriksa file php_error_log.log untuk detail lebih lanjut.'); window.close();</script>"; // DIHAPUS
+    error_log("FATAL ERROR: Receipt printing failed with exception. No browser output.");
+}
+error_log("DEBUG: print_receipt.php finished execution.");
+exit(); // Pastikan tidak ada output lain setelah ini
 ?>
-
-<!DOCTYPE html>
-<html lang="id">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Struk Transaksi #<?php echo htmlspecialchars($transaction['transactionCode']); ?></title>
-    <style>
-        body {
-            font-family: monospace;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-        }
-
-        .receipt-container {
-            width: 300px;
-            /* Lebar standar untuk struk thermal */
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #ddd;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            font-size: 14px;
-            line-height: 1.5;
-            text-align: center;
-        }
-
-        .receipt-header h1 {
-            margin: 0 0 10px 0;
-            font-size: 20px;
-            color: #333;
-        }
-
-        .receipt-header p {
-            margin: 0 0 5px 0;
-            font-size: 12px;
-            color: #666;
-        }
-
-        .receipt-divider {
-            border-top: 1px dashed #ccc;
-            margin: 15px 0;
-        }
-
-        .receipt-details,
-        .receipt-items {
-            text-align: left;
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-
-        .receipt-items th,
-        .receipt-items td {
-            text-align: left;
-            padding: 5px 0;
-        }
-
-        /* Penyesuaian agar kolom Qty dan Subtotal rata kanan */
-        .receipt-items th:nth-child(2),
-        .receipt-items td:nth-child(2) {
-            /* Qty */
-            text-align: center;
-        }
-
-        .receipt-items th:nth-child(3),
-        .receipt-items td:nth-child(3) {
-            /* Subtotal */
-            text-align: right;
-        }
-
-        .receipt-items .item-qty-price {
-            font-size: 11px;
-            color: #888;
-        }
-
-        .receipt-summary td {
-            text-align: left;
-            padding: 5px 0;
-        }
-
-        .receipt-summary td:nth-child(2) {
-            text-align: right;
-            font-weight: bold;
-        }
-
-        .receipt-footer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #666;
-        }
-
-        .receipt-footer p {
-            margin: 0;
-        }
-
-        .col-summary {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* --- Media Print Styles --- */
-        @media print {
-            body {
-                background-color: #fff;
-                margin: 0;
-                padding: 0;
-            }
-
-            .receipt-container {
-                box-shadow: none;
-                border: none;
-                width: 100%;
-                padding: 0;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <div class="receipt-container">
-        <br>
-        <div class="receipt-header">
-            <h1>Penjualan Cafe</h1>
-            <p>Jl. Contoh No. 123, Kota Anda</p>
-            <p>Telp: (021) 12345678</p>
-        </div>
-
-        <div class="receipt-divider"></div>
-
-        <div class="receipt-details">
-            <p><strong>Transaksi ID:</strong> <?php echo htmlspecialchars($transaction['transactionCode']); ?></p>
-            <p><strong>Customer:</strong> <?php echo htmlspecialchars($transaction['customerName']); ?></p>
-            <p><strong>Tanggal:</strong> <?php echo date('d-m-Y H:i:s', strtotime($transaction['createdAt'])); ?></p>
-        </div>
-
-        <div class="receipt-divider"></div>
-
-        <table class="receipt-items">
-            <thead>
-                <tr>
-                    <th>Produk</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($items as $item): ?>
-                    <tr>
-                        <td>
-                            <?php echo htmlspecialchars($item['product_name']); ?><br>
-                            <span class="item-qty-price"><?php echo formatRupiahDisplay($item['product_price']); ?> x
-                                <?php echo htmlspecialchars($item['quantity']); ?></span>
-                        </td>
-
-                        <td><?php echo formatRupiahDisplay($item['subtotal_item']); ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-
-        <div class="receipt-divider"></div>
-
-        <div class="receipt-summary">
-            <div class="col-summary">
-                <span>Total:</span>
-                <span>Rp. <?php echo formatRupiahDisplay($transaction['totalPrice']); ?></span>
-            </div>
-            <div class="col-summary">
-                <span>Bayar:</span>
-                <span>Rp. <?php echo formatRupiahDisplay($transaction['paidAmount']); ?></span>
-            </div>
-            <div class="col-summary">
-                <span>Kembalian:</span>
-                <span>Rp. <?php echo formatRupiahDisplay($transaction['changeAmount']); ?></span>
-            </div>
-        </div>
-
-        <div class="receipt-divider"></div>
-
-        <div class="receipt-footer">
-            <p>Terima Kasih Atas Kunjungan Anda!</p>
-            <p>~~ Selamat Menikmati ~~</p>
-        </div>
-    </div>
-
-    <script>
-        // Pemicu dialog cetak saat halaman dimuat
-        window.onload = function () {
-            window.print();
-        };
-
-        // Tutup tab/jendela setelah cetak (opsional)
-        window.onafterprint = function () {
-            window.close();
-        };
-    </script>
-</body>
-
-</html>

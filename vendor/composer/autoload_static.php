@@ -15,6 +15,7 @@ class ComposerStaticInit9bdb285d67dc3785815ecf9d41202e5c
         ),
         'M' => 
         array (
+            'Mike42\\' => 7,
             'Midtrans\\' => 9,
             'Masterminds\\' => 12,
         ),
@@ -40,6 +41,11 @@ class ComposerStaticInit9bdb285d67dc3785815ecf9d41202e5c
         'Sabberworm\\CSS\\' => 
         array (
             0 => __DIR__ . '/..' . '/sabberworm/php-css-parser/src',
+        ),
+        'Mike42\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/mike42/escpos-php/src/Mike42',
+            1 => __DIR__ . '/..' . '/mike42/gfx-php/src/Mike42',
         ),
         'Midtrans\\' => 
         array (

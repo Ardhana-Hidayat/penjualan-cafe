@@ -158,11 +158,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_transaction'])) {
             ],
             'item_details' => $midtrans_item_details,
             // Hapus atau komentari bagian 'callbacks' ini karena tidak menggunakan webhook
-            // 'callbacks' => [
-            //     'finish' => 'http://yourdomain.com/webhooks/midtrans_finish.php', 
-            //     'error' => 'http://yourdomain.com/webhooks/midtrans_error.php', 
-            //     'pending' => 'http://yourdomain.com/webhooks/midtrans_pending.php'
-            // ]
+            'callbacks' => [
+                'finish' => 'http://pos-php.test:8080/pages/transaksi.php?status=payment_finished',
+                'error' => 'http://pos-php.test:8080/pages/transaksi.php?status=payment_error',
+                'pending' => 'http://pos-php.test:8080/pages/transaksi.php?status=payment_pending'
+            ]
         ];
 
         // Dapatkan Snap Token
@@ -172,7 +172,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_transaction'])) {
         mysqli_commit($link);
 
         // Redirect dengan status sukses dan Snap Token di session
-        redirect_with_status('transaction_success', 'Transaksi berhasil, silakan lanjutkan pembayaran.', $snapToken, $transactionCode);
+        redirect_with_status('transaction_success', 'Transaksi berhasil, silakan lanjutkan pembayaran.', $snapToken, $local_transaction_db_id);
+        // di db_service/transaction/proses_transaksi.php
+        header("Location: ../../pages/transaksi.php?status=transaction_success");
+        exit();
 
     } catch (Exception $e) {
         // Rollback transaksi lokal jika ada kesalahan
