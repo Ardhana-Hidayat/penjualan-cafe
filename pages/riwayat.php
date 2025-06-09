@@ -1,15 +1,12 @@
 <?php
-// pages/riwayat-transaksi.php
 session_start();
 
-// Cek apakah user sudah login (sesuaikan dengan logika autentikasi Anda)
-if (!isset($_SESSION['user_id'])) {
-  header("Location: ../pages/auth/login.php"); // Redirect ke halaman login jika belum login
-  exit();
+include '../config/koneksi.php';
+
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
+    header("location: ../auth/login.php?status=not_logged_in");
+    exit();
 }
-
-include '../config/koneksi.php'; // Sesuaikan path jika lokasi koneksi.php berbeda
-
 // --- Konfigurasi Paginasi ---
 $limit = 10; // Jumlah transaksi unik per halaman
 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;

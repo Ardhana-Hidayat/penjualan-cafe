@@ -1,14 +1,12 @@
 <?php
-// pages/laporan.php
 session_start();
 
-// Cek apakah user sudah login (sesuaikan dengan logika autentikasi Anda)
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../pages/auth/login.php"); // Redirect ke halaman login jika belum login
+include '../config/koneksi.php';
+
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
+    header("location: ../auth/login.php?status=not_logged_in");
     exit();
 }
-
-include '../config/koneksi.php'; // Sesuaikan path jika lokasi koneksi.php berbeda
 
 // Ambil bulan dan tahun dari GET request, default ke bulan/tahun saat ini
 $selected_month = $_GET['bulan'] ?? date('n'); // n untuk bulan tanpa leading zero
@@ -224,8 +222,7 @@ function formatRupiahDisplay($angka)
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
-                                <button type="submit"
-                                    class="p-2 bg-[#3B378B] text-white rounded-md hover:bg-[#1E1B57]">Filter</button>
+                                
                             </form>
                             <button class="p-2 bg-green-500 text-white rounded-md hover:bg-green-600"
                                 onclick="exportReport('excel')">

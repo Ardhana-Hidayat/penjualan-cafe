@@ -1,10 +1,13 @@
 <?php
-// pages/transaksi.php
 session_start();
 
 include '../config/koneksi.php';
 
-// --- Ambil Data Produk untuk Tampilan --- (Tidak ada perubahan di sini)
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
+    header("location: ../auth/login.php?status=not_logged_in");
+    exit();
+}
+
 $products = [];
 $product_query = "SELECT p.id, p.name AS product_name, p.price, p.stock, c.name AS category_name
                   FROM products AS p
@@ -149,11 +152,9 @@ unset($_SESSION['midtrans_order_id']);
                       </td>
                       <td class="border border-gray-400 px-4 py-3">
                         <div class="flex justify-center gap-3">
-                          <button class="bg-[#5148FF] hover:bg-blue-500 rounded-md p-2">
-                            <a href="print_receipt.php?transaction_id=<?php echo htmlspecialchars($transaction['id']); ?>"
-                              target="_blank" class="bg-[#5148FF] hover:bg-blue-500 text-white rounded-md p-2">
-                              Struk
-                            </a>
+                          <button type="button" class="bg-[#5148FF] hover:bg-blue-500 text-white rounded-md p-2 text-sm"
+                            onclick="printReceiptById(<?php echo htmlspecialchars($transaction['id']); ?>)">
+                            Struk
                           </button>
                         </div>
                       </td>
@@ -400,6 +401,71 @@ unset($_SESSION['midtrans_order_id']);
 
       saveCartToLocalStorage();
       console.log('DEBUG: Cart saved to localStorage.');
+    }
+
+    function printReceiptById(transactionId) {
+      if (!transactionId || transactionId === 0) {
+        Swal.fire({
+          icon: 'error',
+          title: 'ID Transaksi Tidak Valid!',
+          text: 'Tidak dapat mencetak struk. ID transaksi tidak ditemukan.',
+          width: '350px'
+        });
+        console.error("DEBUG: printReceiptById called with invalid transactionId:", transactionId);
+        return;
+      }
+
+      const printUrl = 'print_receipt.php?transaction_id=' + transactionId;
+      console.log('DEBUG: Manually attempting to print receipt via Fetch API to:', printUrl);
+
+      // Tampilkan loading SweetAlert
+      Swal.fire({
+        title: 'Mencetak Struk...',
+        text: 'Mohon tunggu, struk sedang diproses.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+        width: '350px'
+      });
+
+      fetch(printUrl)
+        .then(response => {
+          if (!response.ok) { // Jika ada error HTTP (misal 404, 500)
+            console.error('DEBUG: HTTP error when manually calling print_receipt.php:', response.status, response.statusText);
+            return response.text().then(text => { // Ambil teks error jika ada
+              Swal.fire({
+                icon: 'error',
+                title: 'Cetak Gagal!',
+                text: 'Terjadi masalah saat mencetak struk. (Status: ' + response.status + '). Periksa log PHP.',
+                width: '400px'
+              });
+              if (text && text.trim() !== "") {
+                console.warn("DEBUG: print_receipt.php returned unexpected output:", text);
+              }
+            });
+          }
+          console.log('DEBUG: Manual print_receipt.php call successful (HTTP 200 OK).');
+          Swal.fire({
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, icon: 'success',
+            title: 'Struk berhasil dicetak!', width: '300px'
+          });
+          return response.text(); // Ambil teks output PHP jika ada
+        })
+        .then(text => {
+          if (text && text.trim() !== "") {
+            console.warn("DEBUG: print_receipt.php returned unexpected output:", text);
+          }
+        })
+        .catch(error => {
+          console.error('DEBUG: Network or Fetch API error during manual receipt printing:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error Koneksi!',
+            text: 'Gagal mengirim permintaan cetak struk. Periksa koneksi internet/server.',
+            width: '350px'
+          });
+        });
     }
 
     // Fungsi addToCart, removeFromCart (tidak ada perubahan)

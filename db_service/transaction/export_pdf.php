@@ -2,10 +2,11 @@
 // action/laporan/export_pdf.php
 session_start();
 
-require_once __DIR__ . '/../../vendor/autoload.php';
+// Perubahan: Hapus autoload Composer untuk Dompdf jika tidak ada library lain yang memerlukannya
+// require_once __DIR__ . '/../../vendor/autoload.php';
 
-use Dompdf\Dompdf;
-use Dompdf\Options;
+// Sertakan file FPDF
+require_once __DIR__ . '/../../vendor/fpdf/fpdf.php'; // Sesuaikan path jika Anda menaruh FPDF di tempat lain
 
 include '../../config/koneksi.php';
 
@@ -28,7 +29,7 @@ $months_names = [
 ];
 $month_name = $months_names[(int) $selected_month];
 
-// Fungsi untuk memformat angka (sama seperti sebelumnya)
+// Fungsi untuk memformat angka (sama seperti sebelumnya, akan digunakan di FPDF)
 function formatRupiahDisplay($angka)
 {
     if ($angka === null || is_nan($angka)) {
@@ -110,7 +111,7 @@ if ($result_main_report_transactions) {
         }
         mysqli_stmt_close($stmt_items);
 
-        $report_transactions[] = $transaction_row; // Gunakan variabel yang berbeda untuk menghindari konflik nama
+        $report_transactions[] = $transaction_row;
     }
 } else {
     error_log("DEBUG PDF: Main query failed: " . mysqli_errno($link) . " - " . mysqli_error($link));
@@ -120,155 +121,127 @@ mysqli_stmt_close($stmt_main_report_transactions);
 mysqli_close($link);
 
 
-// --- MULAI GENERATE HTML UNTUK PDF ---
-$html = '
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Laporan Transaksi ' . $month_name . ' ' . $selected_year . '</title>
-    <style>
-        body {
-            font-family: "Times New Roman", Times, serif; /* Font Times New Roman */
-            margin: 25px; /* Margin halaman */
-            font-size: 10px; /* Ukuran font dasar */
-        }
-        .header-section {
-            text-align: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #000; /* Garis bawah pada header */
-            padding-bottom: 10px;
-        }
-        .header-section h1 {
-            margin: 0;
-            font-size: 20px; /* Ukuran nama toko */
-            color: #333;
-        }
-        .header-section p {
-            margin: 0;
-            font-size: 11px; /* Ukuran detail alamat/telp */
-            color: #555;
-        }
-        .report-title {
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            margin: 20px 0 5px 0; /* Margin setelah header */
-        }
-        .report-period {
-            text-align: center;
-            font-size: 12px;
-            margin-bottom: 20px;
-        }
+// --- MULAI GENERATE PDF DENGAN FPDF ---
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            border: 1px solid #000; /* Border tabel hitam */
-            padding: 5px;
-            text-align: left;
-            vertical-align: top; /* Rata atas */
-            font-size: 9px; /* Ukuran font isi tabel */
-        }
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-            text-align: center; /* Header tabel rata tengah */
-        }
-        /* Penyesuaian alignment untuk kolom tertentu */
-        .text-center { text-align: center; }
-        .text-left { text-align: left; }
-        .text-right { text-align: right; }
-    </style>
-</head>
-<body>
-    <div class="header-section">
-        <h1>PENJUALAN CAFE</h1>
-        <p>Jl. Contoh No. 123, Kota Anda</p>
-        <p>Telp: (021) 12345678</p>
-    </div>
+// Buat kelas PDF baru yang mewarisi FPDF
+class PDF extends FPDF
+{
+    // Header halaman
+    function Header()
+    {
+        global $month_name, $selected_year;
 
-    <div class="report-title">LAPORAN TRANSAKSI PENJUALAN</div>
-    <div class="report-period">Periode: ' . $months_names[(int) $selected_month] . ' ' . $selected_year . '</div>
+        $this->SetFont('Arial', 'B', 16);
+        $this->Cell(0, 7, 'PENJUALAN CAFE KELOMPOK 2', 0, 1, 'C');
+        $this->SetFont('Arial', '', 10);
+        $this->Cell(0, 5, 'Jl. Serayu', 0, 1, 'C');
+        $this->Cell(0, 5, 'Telp: (123) 12345678', 0, 1, 'C');
+        $this->Ln(5);
+        
+        $this->Line(10, $this->GetY(), $this->GetPageWidth() - 10, $this->GetY());
+        $this->Ln(5);
 
-    <table border="1" cellspacing="0" cellpadding="5">
-        <thead>
-            <tr>
-                <th class="text-center">No</th>
-                <th class="text-center">Kode Transaksi</th>
-                <th class="text-center">Pelanggan</th>
-                <th class="text-center">Produk</th>
-                <th class="text-center">Jumlah</th>
-                <th class="text-center">Harga Satuan</th>
-                <th class="text-center">Subtotal Item</th>
-                <th class="text-center">Total Transaksi</th>
-                <th class="text-center">Bayar</th>
-                <th class="text-center">Kembali</th>
-                <th class="text-center">Tanggal</th>
-            </tr>
-        </thead>
-        <tbody>';
+        $this->SetFont('Arial', 'B', 14);
+        $this->Cell(0, 8, 'LAPORAN TRANSAKSI PENJUALAN', 0, 1, 'C');
+        $this->SetFont('Arial', '', 11);
+        $this->Cell(0, 7, 'Periode: ' . $month_name . ' ' . $selected_year, 0, 1, 'C');
+        $this->Ln(10);
+    }
+
+    // Footer halaman
+    function Footer()
+    {
+        $this->SetY(-15);
+        $this->SetFont('Arial', 'I', 8);
+        $this->Cell(0, 10, 'Halaman ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
+    }
+
+    // Fungsi untuk membuat header tabel
+    function TableHeader()
+    {
+        // Posisi X untuk centering tabel
+        // Lebar total kolom = 255mm
+        // Lebar halaman A4 Landscape = 297mm
+        // Sisa ruang = 297 - 255 = 42mm
+        // Offset untuk centering = 42 / 2 = 21mm
+        $this->SetX(21); // <<< Tambahkan ini untuk mengatur posisi X awal
+        
+        $this->SetFont('Arial', 'B', 8);
+        $this->SetFillColor(230, 230, 230);
+        $this->Cell(10, 8, 'No', 1, 0, 'C', true);
+        $this->Cell(30, 8, 'Kode Transaksi', 1, 0, 'C', true);
+        $this->Cell(25, 8, 'Pelanggan', 1, 0, 'C', true);
+        $this->Cell(35, 8, 'Produk', 1, 0, 'C', true);
+        $this->Cell(15, 8, 'Jumlah', 1, 0, 'C', true);
+        $this->Cell(25, 8, 'Harga Satuan', 1, 0, 'C', true);
+        $this->Cell(25, 8, 'Subtotal Item', 1, 0, 'C', true);
+        $this->Cell(25, 8, 'Total Transaksi', 1, 0, 'C', true);
+        $this->Cell(20, 8, 'Bayar', 1, 0, 'C', true);
+        $this->Cell(20, 8, 'Kembali', 1, 0, 'C', true);
+        $this->Cell(25, 8, 'Tanggal', 1, 1, 'C', true); // 1 di akhir untuk ganti baris
+    }
+
+    // Fungsi untuk membuat baris data tabel
+    function TableRow($data)
+    {
+        // Posisi X untuk centering tabel, harus sama dengan TableHeader
+        $this->SetX(21); // <<< Tambahkan ini untuk mengatur posisi X awal
+        
+        $this->SetFont('Arial', '', 7);
+        $this->Cell(10, 6, $data['no'], 1, 0, 'C');
+        $this->Cell(30, 6, $data['transactionCode'], 1, 0, 'L');
+        $this->Cell(25, 6, $data['customerName'], 1, 0, 'L');
+        $this->Cell(35, 6, $data['product_name'], 1, 0, 'L');
+        $this->Cell(15, 6, $data['quantity'], 1, 0, 'C');
+        $this->Cell(25, 6, 'Rp. ' . $data['product_price'], 1, 0, 'R');
+        $this->Cell(25, 6, 'Rp. ' . $data['item_subtotal'], 1, 0, 'R');
+        $this->Cell(25, 6, 'Rp. ' . $data['total_transaction_amount'], 1, 0, 'R');
+        $this->Cell(20, 6, 'Rp. ' . $data['paidAmount'], 1, 0, 'R');
+        $this->Cell(20, 6, 'Rp. ' . $data['changeAmount'], 1, 0, 'R');
+        $this->Cell(25, 6, $data['createdAt'], 1, 1, 'C');
+    }
+}
+
+$pdf = new PDF('L', 'mm', 'A4');
+$pdf->AliasNbPages();
+$pdf->AddPage();
+$pdf->SetAutoPageBreak(true, 15);
+
+// Cetak header tabel
+$pdf->TableHeader();
 
 if (!empty($report_transactions)) {
     $no = 1;
     foreach ($report_transactions as $transaction) {
-        $rowspan_count = max(1, count($transaction['items']));
         $first_item_of_transaction = true;
 
         foreach ($transaction['items'] as $item) {
-            $html .= '<tr>';
-            if ($first_item_of_transaction) {
-                $html .= '<td class="text-center" rowspan="' . $rowspan_count . '">' . $no++ . '</td>';
-                $html .= '<td class="text-left" rowspan="' . $rowspan_count . '">' . htmlspecialchars($transaction['transactionCode']) . '</td>';
-                $html .= '<td class="text-left" rowspan="' . $rowspan_count . '">' . htmlspecialchars($transaction['customerName']) . '</td>';
-            }
-            $html .= '<td class="text-left">' . htmlspecialchars($item['product_name']) . '</td>';
-            $html .= '<td class="text-center">' . htmlspecialchars($item['quantity']) . '</td>';
-            $html .= '<td class="text-right">Rp. ' . formatRupiahDisplay($item['product_price']) . '</td>';
-            $html .= '<td class="text-right">Rp. ' . formatRupiahDisplay($item['item_subtotal']) . '</td>';
+            $row_data_fpdf = [
+                'no' => $first_item_of_transaction ? $no++ : '',
+                'transactionCode' => $first_item_of_transaction ? htmlspecialchars($transaction['transactionCode']) : '',
+                'customerName' => $first_item_of_transaction ? htmlspecialchars($transaction['customerName']) : '',
+                'product_name' => htmlspecialchars($item['product_name']),
+                'quantity' => htmlspecialchars($item['quantity']),
+                'product_price' => formatRupiahDisplay($item['product_price']),
+                'item_subtotal' => formatRupiahDisplay($item['item_subtotal']),
+                'total_transaction_amount' => $first_item_of_transaction ? formatRupiahDisplay($transaction['totalPrice']) : '',
+                'paidAmount' => $first_item_of_transaction ? formatRupiahDisplay($transaction['paidAmount']) : '',
+                'changeAmount' => $first_item_of_transaction ? formatRupiahDisplay($transaction['changeAmount']) : '',
+                'createdAt' => $first_item_of_transaction ? date('d-m-Y H:i', strtotime($transaction['createdAt'])) : ''
+            ];
+            
+            $pdf->TableRow($row_data_fpdf);
 
-            if ($first_item_of_transaction) {
-                $html .= '<td class="text-right" rowspan="' . $rowspan_count . '">Rp. ' . formatRupiahDisplay($transaction['totalPrice']) . '</td>';
-                $html .= '<td class="text-right" rowspan="' . $rowspan_count . '">Rp. ' . formatRupiahDisplay($transaction['paidAmount']) . '</td>';
-                $html .= '<td class="text-right" rowspan="' . $rowspan_count . '">Rp. ' . formatRupiahDisplay($transaction['changeAmount']) . '</td>';
-                $html .= '<td class="text-center" rowspan="' . $rowspan_count . '">' . date('d-m-Y H:i', strtotime($transaction['createdAt'])) . '</td>';
-            }
-            $html .= '</tr>';
             $first_item_of_transaction = false;
         }
     }
 } else {
-    $html .= '
-        <tr>
-            <td colspan="11" class="text-center">Tidak ada data laporan untuk bulan dan tahun ini.</td>
-        </tr>';
+    $pdf->SetFont('Arial', 'I', 10);
+    // Posisi X untuk pesan "Tidak ada data"
+    $pdf->SetX(21); // <<< Tambahkan ini juga
+    $pdf->Cell(255, 10, 'Tidak ada data laporan untuk bulan dan tahun ini.', 1, 1, 'C'); // Lebar cell harus sama dengan total lebar tabel
 }
 
-$html .= '
-        </tbody>
-    </table>
-</body>
-</html>';
-
-// --- Konfigurasi Dompdf (sama seperti sebelumnya) ---
-$options = new Options();
-$options->set('defaultFont', 'Arial');
-$options->set('isHtml5ParserEnabled', true);
-$options->set('isRemoteEnabled', false); // Biasanya diatur false untuk keamanan dan performa, kecuali Anda butuh load gambar dari URL eksternal
-
-$dompdf = new Dompdf($options);
-
-$dompdf->loadHtml($html);
-
-$dompdf->setPaper('A4', 'landscape'); // Menggunakan orientasi landscape untuk kolom yang banyak
-
-$dompdf->render();
-
-$dompdf->stream("Laporan_Transaksi_{$month_name}_{$selected_year}.pdf", [
-    "Attachment" => true // Mengatur agar file diunduh daripada ditampilkan di browser
-]);
+$pdf->Output("I", "Laporan_Transaksi_{$month_name}_{$selected_year}.pdf");
 
 exit;

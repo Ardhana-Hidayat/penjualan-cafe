@@ -1,7 +1,13 @@
 <?php
 
 session_start();
+
 include '../config/koneksi.php';
+
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
+    header("location: ../auth/login.php?status=not_logged_in");
+    exit();
+}
 
 $kategoriToEdit = null;
 $editKategoriId = null;

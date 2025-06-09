@@ -31,19 +31,15 @@ for ($y = $start_year; $y <= $current_year + 1; $y++) {
 
 // --- Data untuk Bar Chart (Jumlah Transaksi per Hari dalam Bulan/Tahun yang Dipilih) ---
 $sales_data_per_day = [];
-// Hitung jumlah hari dalam bulan & tahun yang dipilih
 $days_in_selected_month = cal_days_in_month(CAL_GREGORIAN, $selected_month, $selected_year);
 
-// Inisialisasi array dengan 0 untuk setiap hari dalam bulan yang dipilih
 for ($i = 1; $i <= $days_in_selected_month; $i++) {
-    $day_key = str_pad($i, 2, '0', STR_PAD_LEFT); // Format '01', '02', dst.
+    $day_key = str_pad($i, 2, '0', STR_PAD_LEFT);
     $sales_data_per_day[$day_key] = 0;
 }
 
-// Format bulan dan tahun untuk query
 $formatted_month_year = $selected_year . '-' . str_pad($selected_month, 2, '0', STR_PAD_LEFT);
 
-// Query untuk mendapatkan JUMLAH TRANSAKSI per hari di bulan/tahun yang dipilih
 $query_daily_sales = "SELECT
                             DATE_FORMAT(createdAt, '%d') AS transaction_day,
                             COUNT(id) AS daily_transaction_count
@@ -58,7 +54,7 @@ $query_daily_sales = "SELECT
 
 $stmt_daily_sales = mysqli_prepare($link, $query_daily_sales);
 if ($stmt_daily_sales) {
-    mysqli_stmt_bind_param($stmt_daily_sales, "s", $formatted_month_year); // Bind parameter bulan-tahun
+    mysqli_stmt_bind_param($stmt_daily_sales, "s", $formatted_month_year);
     mysqli_stmt_execute($stmt_daily_sales);
     $result_daily_sales = mysqli_stmt_get_result($stmt_daily_sales);
     while ($row = mysqli_fetch_assoc($result_daily_sales)) {
@@ -69,11 +65,10 @@ if ($stmt_daily_sales) {
     error_log("Error preparing daily sales query: " . mysqli_error($link));
 }
 
-$barChartLabels = array_keys($sales_data_per_day); // Hari-hari dalam bulan (01, 02, ...)
-$barChartData = array_values($sales_data_per_day); // Jumlah transaksi untuk setiap hari
+$barChartLabels = array_keys($sales_data_per_day);
+$barChartData = array_values($sales_data_per_day);
 
 // --- Data untuk Pie Chart (Jumlah Produk per Kategori) ---
-// (Bagian ini tidak ada perubahan, tidak difilter berdasarkan tanggal untuk kesederhanaan)
 $category_product_counts = [];
 $pieChartLabels = [];
 $pieChartData = [];
@@ -100,13 +95,13 @@ if ($result_category_counts) {
     error_log("Error fetching category product counts: " . mysqli_error($link));
 }
 
-// --- Total Transaksi dan Total Produk (Untuk Cards) ---
-// (Bagian ini juga tidak difilter berdasarkan tanggal untuk kesederhanaan, bisa ditambahkan filter jika diperlukan)
+// --- Total Transaksi (Jumlah) dan Total Produk (Untuk Cards) ---
+// Ini adalah jumlah transaksi, bukan total nilai uang
 $total_transactions_count = 0;
-$query_total_transactions = "SELECT COUNT(id) AS total FROM transactions";
-$res_total_transactions = mysqli_query($link, $query_total_transactions);
-if ($res_total_transactions) {
-    $row = mysqli_fetch_assoc($res_total_transactions);
+$query_total_transactions_count = "SELECT COUNT(id) AS total FROM transactions";
+$res_total_transactions_count = mysqli_query($link, $query_total_transactions_count);
+if ($res_total_transactions_count) {
+    $row = mysqli_fetch_assoc($res_total_transactions_count);
     $total_transactions_count = $row['total'];
 }
 
@@ -117,6 +112,34 @@ if ($res_total_products) {
     $row = mysqli_fetch_assoc($res_total_products);
     $total_products_count = $row['total'];
 }
+
+// --- BARU: Total Penjualan (Nilai Uang) ---
+$total_sales_amount = 0;
+$query_total_sales_amount = "SELECT SUM(totalPrice) AS total_sales_sum FROM transactions";
+$res_total_sales_amount = mysqli_query($link, $query_total_sales_amount);
+if ($res_total_sales_amount) {
+    $row = mysqli_fetch_assoc($res_total_sales_amount);
+    // Gunakan null coalescing operator untuk menangani kasus SUM mengembalikan NULL jika tidak ada baris
+    $total_sales_amount = $row['total_sales_sum'] ?? 0;
+}
+
+// Fungsi untuk memformat angka menjadi mata uang Rupiah (dengan 2 desimal)
+function formatRupiahDisplay($angka)
+{
+    if ($angka === null || is_nan($angka) || $angka === '') {
+        return "0,00";
+    }
+    $num = (float) $angka;
+    $sign = '';
+    if ($num < 0) {
+        $sign = '-';
+        $num = abs($num);
+    }
+    // Format dengan 2 desimal, pemisah desimal koma, pemisah ribuan titik
+    $formatted = number_format($num, 2, ',', '.');
+    return $sign . $formatted;
+}
+
 
 // Tutup koneksi database
 mysqli_close($link);
@@ -156,7 +179,7 @@ mysqli_close($link);
             </div>
 
             <div class="p-6 space-y-6">
-                <div class="grid grid-cols-4 gap-6">
+                <div class="grid grid-cols-3 gap-6">
                     <div class="flex bg-white rounded-xl shadow overflow-hidden">
                         <div class="bg-yellow-400 w-20 flex justify-center items-center">
                             <svg width="24" height="24" viewBox="0 0 39 39" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -167,7 +190,7 @@ mysqli_close($link);
                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                         </div>
-                        <div class="p-4 flex flex-col justify-center text-center">
+                        <div class="p-4 ml-12 flex flex-col justify-center text-center">
                             <div class="text-gray-600 text-sm">Total Transaksi</div>
                             <div class="text-xl font-bold text-gray-800"><?php echo htmlspecialchars($total_transactions_count); ?>
                             </div>
@@ -183,9 +206,19 @@ mysqli_close($link);
                                     fill="white" />
                             </svg>
                         </div>
-                        <div class="p-4 ml-2 flex flex-col justify-center text-center">
+                        <div class="p-4 ml-12 flex flex-col justify-center text-center">
                             <div class="text-gray-600 text-sm">Total Produk</div>
                             <div class="text-xl font-bold text-gray-800"><?php echo htmlspecialchars($total_products_count); ?></div>
+                        </div>
+                    </div>
+
+                    <div class="flex bg-white rounded-xl shadow overflow-hidden">
+                        <div class="bg-blue-400 w-20 flex justify-center items-center">
+                            <label class="text-white">Rp</label>
+                        </div>
+                        <div class="p-4 ml-7 flex flex-col justify-center text-center">
+                            <div class="text-gray-600 text-sm">Total Penjualan (Rp)</div> 
+                            <div class="text-xl font-bold text-gray-800">Rp. <?php echo htmlspecialchars(formatRupiahDisplay($total_sales_amount)); ?></div>
                         </div>
                     </div>
                 </div>

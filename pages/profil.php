@@ -1,16 +1,12 @@
 <?php
-// pages/profil.php
 session_start();
 
-// Cek apakah user sudah login
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../pages/auth/login.php"); // Redirect ke halaman login jika belum login
+include '../config/koneksi.php';
+
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
+    header("location: ../auth/login.php?status=not_logged_in");
     exit();
 }
-
-include '../config/koneksi.php'; // Sertakan koneksi database
-// include '../vendor/autoload.php'; // Ini tidak selalu diperlukan jika SweetAlert2 dipanggil via CDN di frontend
-
 // Inisialisasi variabel untuk data user
 $username = $_SESSION['username'] ?? 'Guest'; // Ambil username dari session
 $user_id = $_SESSION['user_id'];

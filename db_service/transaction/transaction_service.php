@@ -12,6 +12,11 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 \Midtrans\Config::$isSanitized = true;
 \Midtrans\Config::$is3ds = true;
 
+\Midtrans\Config::$curlOptions = array(
+    CURLOPT_SSL_VERIFYPEER => false,
+    CURLOPT_SSL_VERIFYHOST => false,
+);
+
 // Fungsi helper untuk redirect dengan pesan status
 function redirect_with_status($status, $message = '', $snap_token = null, $midtrans_order_id = null)
 {
