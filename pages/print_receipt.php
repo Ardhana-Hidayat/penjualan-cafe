@@ -132,8 +132,8 @@ try {
     /* Header Struk */
     $printer->setJustification(Printer::JUSTIFY_CENTER);
     $printer->text("===============================\n");
-    $printer->text("NAMA CAFE ANDA\n");
-    $printer->text("Alamat Cafe Anda\n");
+    $printer->text("UAS KELOMPOK 2\n");
+    $printer->text("Jl. Serayu No. 18\n");
     $printer->text("Telp: 0812-XXXX-XXXX\n");
     $printer->text("===============================\n");
     $printer->text("\n");
